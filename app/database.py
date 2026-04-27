@@ -1,5 +1,7 @@
 from sqlmodel import SQLModel, Session, create_engine
 
+from app import models  # noqa: F401
+
 
 DATABASE_URL = "sqlite:///./worldcup_retire_us.db"
 

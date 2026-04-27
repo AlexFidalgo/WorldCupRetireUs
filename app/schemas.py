@@ -25,3 +25,9 @@ class ScenarioCalculateResponse(BaseModel):
     base_amount: float
     total_bet: float
     rows: List[ScenarioRow]
+
+class ScenarioSaveResponse(BaseModel):
+    id: int
+    base_amount: float
+    total_bet: float
+    data: dict

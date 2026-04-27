@@ -229,3 +229,106 @@ def get_session():
 You’re saying:
 - give this session to the endpoint.
 - and when it’s done, come back here and clean it up.
+
+# Interacting with SQLite
+
+Create a `sql` file, write the query and run `Ctrl + Shift + Q`.
+
+# `save` route
+
+The code below is creating an object mapped to a database variable.
+```py
+    scenario = Scenario(
+        base_amount=result["base_amount"],
+        total_bet=result["total_bet"],
+        data=result,
+    )
+```
+Because the `Scenario` class is mapped to the table:
+```py
+class Scenario(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    base_amount: float
+    total_bet: float
+    data: dict = Field(sa_column=Column(JSON))
+```
+`table=True` tells SQLModel that this class represents a database table. By default, `class Scenario → table name = "scenario"`: lowercased class name.
+The mapping is stored inside `SQLModel.metadata`.
+
+Go to `http://127.0.0.1:8000/docs`.
+Use `POST /scenarios/save`, with:
+```sql
+{
+  "teams": ["Brazil", "Argentina", "France", "England"],
+  "odds": {
+    "Brazil": {"Bet365": 6.5, "Betano": 6.0},
+    "Argentina": {"Bet365": 8.0},
+    "France": {"Bet365": 7.0},
+    "England": {"Bet365": 9.0}
+  },
+  "bet_weights": {
+    "Brazil": 2,
+    "Argentina": 1,
+    "France": 0,
+    "England": 3
+  },
+  "base_amount": 10
+}
+```
+which is equivalent to
+```sh
+curl -X 'POST' \
+  'http://127.0.0.1:8000/scenarios/save' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "teams": ["Brazil", "Argentina", "France", "England"],
+  "odds": {
+    "Brazil": {"Bet365": 6.5, "Betano": 6.0},
+    "Argentina": {"Bet365": 8.0},
+    "France": {"Bet365": 7.0},
+    "England": {"Bet365": 9.0}
+  },
+  "bet_weights": {
+    "Brazil": 2,
+    "Argentina": 1,
+    "France": 0,
+    "England": 3
+  },
+  "base_amount": 10
+}'
+```
+Then query:
+```sql
+SELECT * FROM scenario;
+```
+
+# CRUD
+
+| Operation | Endpoint               |
+| --------- | ---------------------- |
+| Create    | POST /scenarios/save   |
+| Read all  | GET /scenarios         |
+| Read one  | GET /scenarios/{id}    |
+| Update    | PUT /scenarios/{id}    |
+| Delete    | DELETE /scenarios/{id} |
+
+# Authentication
+
+```
+app/
+  auth/
+    password.py
+    jwt.py
+  routers/
+    users.py
+    auth.py
+```
+
+```sh
+pip install "passlib[bcrypt]" "python-jose[cryptography]" python-multipart
+```
+
+passlib[bcrypt]        password hashing
+python-jose            create and verify JWT tokens
+python-multipart       lets FastAPI receive OAuth2 form login data
