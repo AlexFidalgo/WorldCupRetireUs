@@ -1,5 +1,21 @@
 from typing import Dict, List
-
+class ScenarioService:
+    def calculate(
+        self,
+        teams,
+        odds,
+        bet_weights,
+        base_amount,
+    ):
+        return calculate_scenario(
+            teams=teams,
+            odds=odds,
+            bet_weights=bet_weights,
+            base_amount=base_amount,
+        )
+    
+def get_scenario_service():
+    return ScenarioService()
 
 def calculate_scenario(
     teams: List[str],
@@ -78,66 +94,3 @@ def calculate_scenario(
         "total_bet": total_bet,
         "rows": rows,
     }
-
-
-
-if __name__ == "__main__":
-    
-    teams = [
-        "Brazil",
-        "Argentina",
-        "France",
-        "England",
-    ]
-
-    odds = {
-        "Brazil": {
-            "Bet365": 6.5,
-            "Betano": 6.0,
-            "Superbet": 6.75,
-        },
-        "Argentina": {
-            "Bet365": 8.0,
-            "Betano": 7.5,
-            "Superbet": 8.25,
-        },
-        "France": {
-            "Bet365": 7.0,
-            "Betano": 6.8,
-            "Superbet": 7.2,
-        },
-        "England": {
-            "Bet365": 9.0,
-            "Betano": 8.5,
-            "Superbet": 8.75,
-        },
-    }
-
-    bet_weights = {
-        "Brazil": 2,
-        "Argentina": 1,
-        "France": 0,
-        "England": 3,
-    }
-
-    result = calculate_scenario(
-        teams=teams,
-        odds=odds,
-        bet_weights=bet_weights,
-        base_amount=10,
-    )
-
-    print(f"Total bet: {result['total_bet']}")
-
-    for row in result["rows"]:
-        print(
-            row["team"],
-            "| Bet:",
-            row["bet_amount"],
-            "| Best odd:",
-            row["best_odd"],
-            "| Company:",
-            row["best_company"],
-            "| Net if wins:",
-            row["net_result"],
-        )

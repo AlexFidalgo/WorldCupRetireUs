@@ -1,0 +1,6 @@
+
+GET http://127.0.0.1:8000/items/?name=Notebook&price=3500&in_stock=true
+
+###
+
+GET http://127.0.0.1:8000/items/123?name=Notebook&price=3500&in_stock=true
