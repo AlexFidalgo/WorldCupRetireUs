@@ -2,3 +2,4 @@ venv/
 extras/
 __pycache__/
 *.db
+.env

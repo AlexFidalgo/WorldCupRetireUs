@@ -31,3 +31,12 @@ class ScenarioSaveResponse(BaseModel):
     base_amount: float
     total_bet: float
     data: dict
+
+class UserCreateRequest(BaseModel):
+    username: str
+    password: str
+
+
+class UserResponse(BaseModel):
+    id: int
+    username: str

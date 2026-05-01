@@ -332,3 +332,48 @@ pip install "passlib[bcrypt]" "python-jose[cryptography]" python-multipart
 passlib[bcrypt]        password hashing
 python-jose            create and verify JWT tokens
 python-multipart       lets FastAPI receive OAuth2 form login data
+
+JWT:
+- User logs in → server verifies credentials
+- Server generates token with user info
+- Client sends token in future requests
+- Server validates token instead of re-checking password
+
+```http
+POST /auth/login
+```
+Response:
+```json
+{
+  "access_token": "...",
+  "token_type": "bearer"
+}
+```
+Then, client must store the token
+Options:
+* localStorage (common, but less secure)
+* httpOnly cookies (more secure)
+* memory (frontend state)
+Then, client must send it manually
+Every request must include:
+```http
+Authorization: Bearer <token>
+```
+The browser does not automatically append the token. The frontend (React, etc.) must do it.
+
+## Protecting the routes
+
+Protecting a route: this endpoint can only be accessed if the user is authenticated.
+The request must include a valid JWT, the server must validate it, and the server must identify the user.
+
+FastAPI will:
+- extract token from request
+- decode JWT
+- find user in DB
+- inject user into function
+- only then execute your logic
+
+How do you protect endpoints in FastAPI? We use dependency injection with a function that validates the JWT token and retrieves the current user. This dependency is added to endpoints using Depends.
+
+Why inject `current_user` i the route function parameters, even if not used? It enforces authentication via dependency injection, and also provides the authenticated user for authorization logic such as ownership checks.
+

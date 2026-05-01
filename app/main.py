@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from app.database import create_db_and_tables
-from app.routers import scenarios
+from app.routers import scenarios, users, auth
 
 
 app = FastAPI()
@@ -35,3 +35,7 @@ def read_items_with_id(item_id: int, name: str, price: float = 0.0, in_stock: bo
         "price": price,
         "in_stock": in_stock
     }
+
+app.include_router(users.router)
+
+app.include_router(auth.router)

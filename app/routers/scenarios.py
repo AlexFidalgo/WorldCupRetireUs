@@ -4,7 +4,7 @@ from app.services.scenario_calculator import ScenarioService, get_scenario_servi
 
 from sqlmodel import Session, select
 
-from app.models import Scenario
+from app.models import Scenario, User
 
 from app.database import get_session
 
@@ -13,6 +13,8 @@ from app.schemas import (
     ScenarioCalculateResponse,
     ScenarioSaveResponse,
 )
+
+from app.auth.dependencies import get_current_user
 
 
 router = APIRouter(
@@ -39,6 +41,7 @@ def save_scenario_endpoint(
     request: ScenarioCalculateRequest,
     session: Session = Depends(get_session),
     service: ScenarioService = Depends(get_scenario_service),
+    current_user: User = Depends(get_current_user),
 ):
     result = service.calculate(
         teams=request.teams,
@@ -62,6 +65,7 @@ def save_scenario_endpoint(
 @router.get("/", response_model=List[ScenarioSaveResponse])
 def list_scenarios_endpoint(
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     scenarios = session.exec(select(Scenario)).all()
     return scenarios
@@ -71,6 +75,7 @@ def list_scenarios_endpoint(
 def get_scenario_endpoint(
     scenario_id: int,
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     scenario = session.get(Scenario, scenario_id)
 
@@ -86,6 +91,7 @@ def get_scenario_endpoint(
 def delete_scenario_endpoint(
     scenario_id: int,
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     scenario = session.get(Scenario, scenario_id)
 
@@ -106,6 +112,7 @@ def update_scenario_endpoint(
     request: ScenarioCalculateRequest,
     session: Session = Depends(get_session),
     service: ScenarioService = Depends(get_scenario_service),
+    current_user: User = Depends(get_current_user),
 ):
     scenario = session.get(Scenario, scenario_id)
 
