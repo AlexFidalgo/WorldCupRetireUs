@@ -12,9 +12,12 @@ from app.schemas import (
     ScenarioCalculateRequest,
     ScenarioCalculateResponse,
     ScenarioSaveResponse,
+    ScenarioPublicResponse,
 )
 
 from app.auth.dependencies import get_current_user
+
+from app.services.scenario_mapper import scenario_to_public_response
 
 
 router = APIRouter(
@@ -51,9 +54,11 @@ def save_scenario_endpoint(
     )
 
     scenario = Scenario(
+        name=request.name,
         base_amount=result["base_amount"],
         total_bet=result["total_bet"],
         data=result,
+        user_id=current_user.id,
     )
 
     session.add(scenario)
@@ -62,20 +67,23 @@ def save_scenario_endpoint(
 
     return scenario
 
-@router.get("/", response_model=List[ScenarioSaveResponse])
+@router.get("/", response_model=List[ScenarioPublicResponse])
 def list_scenarios_endpoint(
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user),
 ):
-    scenarios = session.exec(select(Scenario)).all()
-    return scenarios
+    statement = select(Scenario, User).where(Scenario.user_id == User.id)
+    results = session.exec(statement).all()
+
+    return [
+        scenario_to_public_response(scenario, user.username)
+        for scenario, user in results
+    ]
 
 
-@router.get("/{scenario_id}", response_model=ScenarioSaveResponse)
+@router.get("/{scenario_id}", response_model=ScenarioPublicResponse)
 def get_scenario_endpoint(
     scenario_id: int,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user),
 ):
     scenario = session.get(Scenario, scenario_id)
 
@@ -85,7 +93,9 @@ def get_scenario_endpoint(
             detail="Scenario not found",
         )
 
-    return scenario
+    user = session.get(User, scenario.user_id)
+
+    return scenario_to_public_response(scenario, user.username)
 
 @router.delete("/{scenario_id}")
 def delete_scenario_endpoint(
@@ -94,6 +104,12 @@ def delete_scenario_endpoint(
     current_user: User = Depends(get_current_user),
 ):
     scenario = session.get(Scenario, scenario_id)
+
+    if scenario.user_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Not allowed to modify this scenario",
+        )
 
     if scenario is None:
         raise HTTPException(
@@ -116,6 +132,12 @@ def update_scenario_endpoint(
 ):
     scenario = session.get(Scenario, scenario_id)
 
+    if scenario.user_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Not allowed to modify this scenario",
+        )
+
     if scenario is None:
         raise HTTPException(
             status_code=404,
@@ -129,6 +151,7 @@ def update_scenario_endpoint(
         base_amount=request.base_amount,
     )
 
+    scenario.name = request.name
     scenario.base_amount = result["base_amount"]
     scenario.total_bet = result["total_bet"]
     scenario.data = result

@@ -377,3 +377,67 @@ How do you protect endpoints in FastAPI? We use dependency injection with a func
 
 Why inject `current_user` i the route function parameters, even if not used? It enforces authentication via dependency injection, and also provides the authenticated user for authorization logic such as ownership checks.
 
+# Testing
+
+
+```python
+from app.services.scenario_calculator import calculate_scenario
+
+
+def test_calculate_scenario_basic():
+    teams = ["Brazil", "Argentina"]
+
+    odds = {
+        "Brazil": {"Bet365": 6.5},
+        "Argentina": {"Bet365": 8.0},
+    }
+
+    bet_weights = {
+        "Brazil": 2,
+        "Argentina": 1,
+    }
+
+    result = calculate_scenario(
+        teams=teams,
+        odds=odds,
+        bet_weights=bet_weights,
+        base_amount=10,
+    )
+
+    assert result["total_bet"] == 30
+
+    assert len(result["rows"]) == 2
+
+    brazil = result["rows"][0]
+
+    assert brazil["team"] == "Brazil"
+    assert brazil["bet_amount"] == 20
+    assert brazil["best_odd"] == 6.5
+```
+In PowerShell, run
+```sh
+pytest
+```
+
+Create a file named `pytest.ini` in the root directory, with this content:
+```ini
+[pytest]
+pythonpath = .
+```
+
+Pytest collects every file named `test_*.py`. So if it is inside tests/, pytest treats it as a real test. By default, pytest will look recursively from the project root and collect:
+- files named: test_*.py or *_test.py
+- functions named: test_*
+- classes named: Test*
+
+For example, in `test_auth_flow.py`, we have:
+```py
+client = TestClient(app)
+```
+`TestClient` spins up the FastAPI app in memory. 
+means:
+- no uvicorn
+- no port
+- no browser
+Tests call your app directly.
+

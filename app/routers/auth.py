@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session, select
 
 from app.auth.jwt import create_access_token
@@ -12,21 +13,19 @@ router = APIRouter(
     tags=["auth"],
 )
 
-
 @router.post("/login")
 def login_endpoint(
-    username: str,
-    password: str,
+    form_data: OAuth2PasswordRequestForm = Depends(),
     session: Session = Depends(get_session),
 ):
     user = session.exec(
-        select(User).where(User.username == username)
+        select(User).where(User.username == form_data.username)
     ).first()
 
     if user is None:
         raise HTTPException(status_code=400, detail="Invalid credentials")
 
-    if not verify_password(password, user.hashed_password):
+    if not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Invalid credentials")
 
     access_token = create_access_token(

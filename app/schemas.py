@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 
 
 class ScenarioCalculateRequest(BaseModel):
+    name: str = "puta cenário"
     teams: List[str]
     odds: Dict[str, Dict[str, float]]
     bet_weights: Dict[str, float]
@@ -28,6 +29,7 @@ class ScenarioCalculateResponse(BaseModel):
 
 class ScenarioSaveResponse(BaseModel):
     id: int
+    name: str
     base_amount: float
     total_bet: float
     data: dict
@@ -39,4 +41,13 @@ class UserCreateRequest(BaseModel):
 
 class UserResponse(BaseModel):
     id: int
+    username: str
+
+class ScenarioPublicResponse(BaseModel):
+    id: int
+    name: str
+    base_amount: float
+    total_bet: float
+    data: dict
+    user_id: int
     username: str
