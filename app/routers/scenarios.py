@@ -71,11 +71,40 @@ def save_scenario_endpoint(
 def list_scenarios_endpoint(
     limit: int = Query(default=10, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
+    sort_by: str = Query(default="id"),
+    sort_order: str = Query(default="asc"),
+    username: str | None = Query(default=None),
     session: Session = Depends(get_session),
 ):
+    allowed_sort_fields = {
+        "id": Scenario.id,
+        "name": Scenario.name,
+        "base_amount": Scenario.base_amount,
+        "total_bet": Scenario.total_bet,
+    }
+
+    if sort_by not in allowed_sort_fields:
+        raise HTTPException(status_code=400, detail="Invalid sort_by value")
+
+    if sort_order not in ["asc", "desc"]:
+        raise HTTPException(status_code=400, detail="Invalid sort_order value")
+
+    sort_column = allowed_sort_fields[sort_by]
+
+    if sort_order == "desc":
+        sort_column = sort_column.desc()
+
     statement = (
         select(Scenario, User)
         .where(Scenario.user_id == User.id)
+    )
+
+    if username is not None:
+        statement = statement.where(User.username == username)
+
+    statement = (
+        statement
+        .order_by(sort_column)
         .offset(offset)
         .limit(limit)
     )
@@ -86,7 +115,6 @@ def list_scenarios_endpoint(
         scenario_to_public_response(scenario, user.username)
         for scenario, user in results
     ]
-
 
 @router.get("/{scenario_id}", response_model=ScenarioPublicResponse)
 def get_scenario_endpoint(

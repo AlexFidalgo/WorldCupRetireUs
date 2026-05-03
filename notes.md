@@ -693,3 +693,21 @@ def list_scenarios_endpoint(
     session: Session = Depends(get_session),
 )
 ```
+# Sorting
+
+Pagination without sorting can be unstable because the database does not guarantee row order unless we explicitly tell it.
+
+# Filtering
+
+```py
+@router.get("/", response_model=List[ScenarioPublicResponse])
+def list_scenarios_endpoint(
+    limit: int = Query(default=10, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    sort_by: str = Query(default="id"),
+    sort_order: str = Query(default="asc"),
+    username: str | None = Query(default=None),
+    session: Session = Depends(get_session),
+):
+```
+

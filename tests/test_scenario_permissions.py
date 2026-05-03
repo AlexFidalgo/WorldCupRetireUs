@@ -132,3 +132,77 @@ def test_list_scenarios_with_pagination(client):
 
     assert len(second_page_data) == 1
     assert second_page_data[0]["name"] == "Scenario 3"
+
+def test_list_scenarios_sorted_by_base_amount_desc(client):
+    alex_headers = create_user_and_login(client, "alex")
+
+    payloads = [
+        ("Low", 5),
+        ("Medium", 10),
+        ("High", 20),
+    ]
+
+    for name, base_amount in payloads:
+        response = client.post(
+            "/scenarios/save",
+            json={
+                "name": name,
+                "teams": ["Brazil"],
+                "odds": {"Brazil": {"Bet365": 6.0}},
+                "bet_weights": {"Brazil": 1},
+                "base_amount": base_amount,
+            },
+            headers=alex_headers,
+        )
+
+        assert response.status_code == 200
+
+    response = client.get(
+        "/scenarios/?sort_by=base_amount&sort_order=desc"
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 3
+
+    assert data[0]["name"] == "High"
+    assert data[1]["name"] == "Medium"
+    assert data[2]["name"] == "Low"
+
+def test_filter_scenarios_by_username(client):
+    alex_headers = create_user_and_login(client, "alex")
+    bob_headers = create_user_and_login(client, "bob")
+
+    # Alex creates 2 scenarios
+    client.post(
+        "/scenarios/save",
+        json=scenario_payload("Alex scenario 1"),
+        headers=alex_headers,
+    )
+
+    client.post(
+        "/scenarios/save",
+        json=scenario_payload("Alex scenario 2"),
+        headers=alex_headers,
+    )
+
+    # Bob creates 1 scenario
+    client.post(
+        "/scenarios/save",
+        json=scenario_payload("Bob scenario"),
+        headers=bob_headers,
+    )
+
+    # Filter for alex
+    response = client.get("/scenarios/?username=alex")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 2
+
+    for scenario in data:
+        assert scenario["username"] == "alex"
