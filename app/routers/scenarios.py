@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List
 from app.services.scenario_calculator import ScenarioService, get_scenario_service
 
@@ -69,9 +69,17 @@ def save_scenario_endpoint(
 
 @router.get("/", response_model=List[ScenarioPublicResponse])
 def list_scenarios_endpoint(
+    limit: int = Query(default=10, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
     session: Session = Depends(get_session),
 ):
-    statement = select(Scenario, User).where(Scenario.user_id == User.id)
+    statement = (
+        select(Scenario, User)
+        .where(Scenario.user_id == User.id)
+        .offset(offset)
+        .limit(limit)
+    )
+
     results = session.exec(statement).all()
 
     return [

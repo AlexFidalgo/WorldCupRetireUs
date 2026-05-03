@@ -619,3 +619,77 @@ destroy session
 
 “How do you test FastAPI with a database?”
 “We use pytest fixtures to create an isolated test database and override FastAPI dependencies so the application uses the test DB instead of the real one.”
+
+# Pagination
+
+Pagination means returning data in chunks instead of everything at once.
+
+Imagine you have 10,000 scenarios. Your API:
+```http
+GET /scenarios
+```
+returns:
+```text
+10,000 items
+```
+This results in slow response, high memory usage, unnecessary data transfer.
+
+With pagination, you return **small slices**:
+```http
+GET /scenarios?limit=10&offset=0
+```
+returns first 10
+```http
+GET /scenarios?limit=10&offset=10
+```
+returns next 10
+
+## 1. Offset-based (we’ll implement this)
+
+```text
+limit = how many items
+offset = where to start
+```
+Example:
+
+```text
+limit=10, offset=0   → items 1–10
+limit=10, offset=10  → items 11–20
+```
+## 2. Cursor-based
+
+```text
+limit = how many items
+cursor = a marker that says where to continue from
+```
+Example
+```text
+limit=10, cursor=null     → items 1–10
+limit=10, cursor=item_10  → items 11–20
+limit=10, cursor=item_20  → items 21–30
+```
+The API usually returns the next cursor together with the results:
+```json
+{
+  "data": [
+    "item 1",
+    "item 2",
+    "item 3"
+  ],
+  "nextCursor": "item_3"
+}
+```
+
+Cursor-based pagination is usually better when data changes frequently. Imagine you are using offset pagination:
+```text
+limit=10, offset=10
+```
+But before you request the second page, someone inserts a new item at the beginning. Now the positions changed, so you may see a duplicate item or skip one. With cursor pagination, you continue after a specific item, so it is more stable.
+
+```py
+def list_scenarios_endpoint(
+    limit: int = Query(default=10, ge=1, le=100), # default = 10, minimum = 1, maximum = 100
+    offset: int = Query(default=0, ge=0),
+    session: Session = Depends(get_session),
+)
+```

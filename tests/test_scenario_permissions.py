@@ -101,3 +101,34 @@ def test_user_cannot_delete_other_users_scenario(client):
 
     assert delete_response.status_code == 403
     assert delete_response.json()["detail"] == "Not allowed to delete this scenario"
+
+def test_list_scenarios_with_pagination(client):
+    alex_headers = create_user_and_login(client, "alex")
+
+    for i in range(3):
+        response = client.post(
+            "/scenarios/save",
+            json=scenario_payload(f"Scenario {i + 1}"),
+            headers=alex_headers,
+        )
+
+        assert response.status_code == 200
+
+    first_page = client.get("/scenarios/?limit=2&offset=0")
+
+    assert first_page.status_code == 200
+
+    first_page_data = first_page.json()
+
+    assert len(first_page_data) == 2
+    assert first_page_data[0]["name"] == "Scenario 1"
+    assert first_page_data[1]["name"] == "Scenario 2"
+
+    second_page = client.get("/scenarios/?limit=2&offset=2")
+
+    assert second_page.status_code == 200
+
+    second_page_data = second_page.json()
+
+    assert len(second_page_data) == 1
+    assert second_page_data[0]["name"] == "Scenario 3"
