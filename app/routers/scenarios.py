@@ -108,7 +108,7 @@ def delete_scenario_endpoint(
     if scenario.user_id != current_user.id:
         raise HTTPException(
             status_code=403,
-            detail="Not allowed to modify this scenario",
+            detail="Not allowed to delete this scenario",
         )
 
     if scenario is None:

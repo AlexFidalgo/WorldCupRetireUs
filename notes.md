@@ -441,3 +441,181 @@ means:
 - no browser
 Tests call your app directly.
 
+We need to make tests user their own SQLite database instead of your real app DB.
+
+Create:
+
+```text
+tests/conftest.py
+```
+```python
+import pytest
+from fastapi.testclient import TestClient
+from sqlmodel import SQLModel, Session, create_engine
+from sqlmodel.pool import StaticPool
+
+from app.database import get_session
+from app.main import app
+
+
+@pytest.fixture(name="session")
+def session_fixture():
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+
+    SQLModel.metadata.create_all(engine)
+
+    with Session(engine) as session:
+        yield session
+
+
+@pytest.fixture(name="client")
+def client_fixture(session: Session):
+    def get_test_session():
+        yield session
+
+    app.dependency_overrides[get_session] = get_test_session
+
+    client = TestClient(app)
+
+    yield client
+
+    app.dependency_overrides.clear()
+```
+This creates an **in-memory test database**.
+
+So every test starts with:
+```text
+empty database
+```
+and your real file:
+
+```text
+worldcup_retire_us.db
+```
+is not touched.
+
+This file
+- creates a **temporary test database**
+- replaces your real DB dependency (`get_session`)
+- gives you a ready-to-use **client** for API tests.
+
+```python
+@pytest.fixture
+```
+pytest automatically discovers and uses **fixtures**.
+
+Inside `test_auth_flow.py`, we have:
+```py
+def test_create_user_and_login(client)
+```
+pytest injects the client argument automatically from `@pytest.fixture(name="client")`.
+
+pytest
+1. scans files
+2. finds test functions
+3. sees parameters like `client`
+4. looks for a fixture named `client`
+5. finds it in `conftest.py`
+6. executes it
+
+```python
+@pytest.fixture(name="session")
+def session_fixture():
+```
+defines a fixture named `"session"`.
+```python
+engine = create_engine(
+    "sqlite://",
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
+```
+creates an **in-memory SQLite database**.
+
+```text
+"sqlite://" → no file → RAM only
+```
+
+```python
+poolclass=StaticPool
+```
+forces all connections to use the **same memory DB**. Without `StaticPool`, each connection = new empty DB and tests break.
+
+```python
+SQLModel.metadata.create_all(engine)
+```
+creates all tables (`User`, `Scenario`).
+
+```python
+with Session(engine) as session:
+    yield session
+```
+gives a DB session to whoever needs it.
+
+```python
+@pytest.fixture(name="client")
+def client_fixture(session: Session):
+```
+this fixture **depends on session**.
+pytest sees "client needs session" → build session first.
+
+```python
+def get_test_session():
+    yield session
+
+app.dependency_overrides[get_session] = get_test_session
+```
+The app normally does:
+```python
+session: Session = Depends(get_session)
+```
+Now we override it: "Instead of real DB → use test DB".
+
+```python
+client = TestClient(app)
+```
+creates a fake HTTP client.
+
+```python
+app.dependency_overrides.clear()
+```
+removes override after test.
+
+
+When you run:
+
+```python
+def test_create_user_and_login(client):
+```
+pytest does:
+### Step 1
+Build `session`:
+```text
+create in-memory DB
+create tables
+```
+### Step 2
+Build `client`:
+```text
+override get_session → use test session
+create TestClient
+```
+### Step 3
+Run test:
+```text
+POST /users
+POST /auth/login
+```
+### Step 4
+Cleanup:
+```text
+clear dependency overrides
+destroy session
+```
+
+“How do you test FastAPI with a database?”
+“We use pytest fixtures to create an isolated test database and override FastAPI dependencies so the application uses the test DB instead of the real one.”

@@ -1,12 +1,7 @@
-from fastapi.testclient import TestClient
-
-from app.main import app
 
 
-client = TestClient(app)
 
-
-def test_create_user_and_login():
+def test_create_user_and_login(client):
     create_response = client.post(
         "/users/",
         json={
