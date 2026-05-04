@@ -1,5 +1,5 @@
 from typing import Dict, List, Optional
-
+from datetime import datetime
 from pydantic import BaseModel, Field
 
 
@@ -51,3 +51,20 @@ class ScenarioPublicResponse(BaseModel):
     data: dict
     user_id: int
     username: str
+
+class OddCreateRequest(BaseModel):
+    team: str
+    platform: str
+    market: str = "winner"
+    odd: float = Field(gt=0)
+    source_url: Optional[str] = None
+
+
+class OddResponse(BaseModel):
+    id: int
+    team: str
+    platform: str
+    market: str
+    odd: float
+    source_url: Optional[str]
+    scraped_at: datetime

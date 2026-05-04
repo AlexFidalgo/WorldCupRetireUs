@@ -206,3 +206,26 @@ def test_filter_scenarios_by_username(client):
 
     for scenario in data:
         assert scenario["username"] == "alex"
+
+def test_delete_missing_scenario_returns_404(client):
+    headers = create_user_and_login(client, "alex")
+
+    response = client.delete(
+        "/scenarios/999",
+        headers=headers,
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Scenario not found"
+
+def test_update_missing_scenario_returns_404(client):
+    headers = create_user_and_login(client, "alex")
+
+    response = client.put(
+        "/scenarios/999",
+        json=scenario_payload("Does not exist"),
+        headers=headers,
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Scenario not found"

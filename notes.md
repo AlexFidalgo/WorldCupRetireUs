@@ -711,3 +711,27 @@ def list_scenarios_endpoint(
 ):
 ```
 
+# Pydantic schemas
+
+```py
+class OddCreateRequest(BaseModel):
+    team: str
+    platform: str
+    market: str = "winner"
+    odd: float = Field(gt=0)
+    source_url: Optional[str] = None
+
+
+class OddResponse(BaseModel):
+    id: int
+    team: str
+    platform: str
+    market: str
+    odd: float
+    source_url: Optional[str]
+    scraped_at: datetime
+```
+
+These are Pydantic schemas. Pydant schemas define the shape of data that enters and leaves the API.
+
+Use separate Pydantic schemas for request and response models so the API has explicit validation and serialization boundaries. The create schema accepts only client-provided fields, while the response schema includes server-generated fields like id and timestamps. FastAPI uses these schemas for request validation, response filtering, and OpenAPI documentation.

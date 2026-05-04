@@ -141,16 +141,16 @@ def delete_scenario_endpoint(
 ):
     scenario = session.get(Scenario, scenario_id)
 
-    if scenario.user_id != current_user.id:
-        raise HTTPException(
-            status_code=403,
-            detail="Not allowed to delete this scenario",
-        )
-
     if scenario is None:
         raise HTTPException(
             status_code=404,
             detail="Scenario not found",
+        )
+
+    if scenario.user_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Not allowed to delete this scenario",
         )
 
     session.delete(scenario)
@@ -168,16 +168,16 @@ def update_scenario_endpoint(
 ):
     scenario = session.get(Scenario, scenario_id)
 
-    if scenario.user_id != current_user.id:
-        raise HTTPException(
-            status_code=403,
-            detail="Not allowed to modify this scenario",
-        )
-
     if scenario is None:
         raise HTTPException(
             status_code=404,
             detail="Scenario not found",
+        )
+
+    if scenario.user_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Not allowed to modify this scenario",
         )
 
     result = service.calculate(
