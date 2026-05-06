@@ -735,3 +735,11 @@ class OddResponse(BaseModel):
 These are Pydantic schemas. Pydant schemas define the shape of data that enters and leaves the API.
 
 Use separate Pydantic schemas for request and response models so the API has explicit validation and serialization boundaries. The create schema accepts only client-provided fields, while the response schema includes server-generated fields like id and timestamps. FastAPI uses these schemas for request validation, response filtering, and OpenAPI documentation.
+
+request: OddCreateRequest: FastAPI reads JSON from the request body and validates it with Pydantic.
+session: Session = Depends(get_session): FastAPI injects the DB session for this request.
+odd = Odd(...): convert from API schema to DB model.
+session.add(odd): stage object for insertion.
+session.commit(): persist to the database.
+session.refresh(odd): reload the object so generated fields like id are available.
+response_model=OddResponse: FastAPI serializes the returned object into the public response shape.

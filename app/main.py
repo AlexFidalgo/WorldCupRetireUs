@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
 from app.database import create_db_and_tables
-from app.routers import scenarios, users, auth
+from app.routers import scenarios, users, auth, odds
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -13,8 +13,6 @@ async def lifespan(app: FastAPI):
     # shutdown (optional cleanup)
 
 app = FastAPI(lifespan=lifespan)
-
-
 
 @app.get("/")
 def root():
@@ -26,3 +24,5 @@ app.include_router(scenarios.router)
 app.include_router(users.router)
 
 app.include_router(auth.router)
+
+app.include_router(odds.router)
