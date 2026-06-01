@@ -207,3 +207,55 @@ def test_create_odd_updates_existing_team_platform_market(client):
     assert all_odds[0]["id"] == first_data["id"]
     assert all_odds[0]["odd"] == 6.1
     assert all_odds[0]["source_url"] == "https://example.com/updated"
+
+
+def test_list_best_odds_returns_best_odd_per_team(client):
+    client.post("/odds/", json=create_odd_payload("Brazil", "Bet365", "winner", 6.5))
+    client.post("/odds/", json=create_odd_payload("Brazil", "Betano", "winner", 6.0))
+    client.post("/odds/", json=create_odd_payload("Brazil", "Novibet", "winner", 6.8))
+
+    client.post("/odds/", json=create_odd_payload("Argentina", "Bet365", "winner", 8.0))
+    client.post("/odds/", json=create_odd_payload("Argentina", "Betano", "winner", 7.7))
+
+    response = client.get("/odds/best?market=winner")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 2
+
+    best_by_team = {item["team"]: item for item in data}
+
+    assert best_by_team["Brazil"]["best_platform"] == "Novibet"
+    assert best_by_team["Brazil"]["best_odd"] == 6.8
+    assert best_by_team["Brazil"]["market"] == "winner"
+
+    assert best_by_team["Argentina"]["best_platform"] == "Bet365"
+    assert best_by_team["Argentina"]["best_odd"] == 8.0
+    assert best_by_team["Argentina"]["market"] == "winner"
+
+
+def test_list_best_odds_filters_by_market(client):
+    client.post("/odds/", json=create_odd_payload("Brazil", "Bet365", "winner", 6.5))
+    client.post("/odds/", json=create_odd_payload("Brazil", "Bet365", "group_winner", 2.1))
+    client.post("/odds/", json=create_odd_payload("Brazil", "Betano", "group_winner", 2.3))
+
+    response = client.get("/odds/best?market=group_winner")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]["team"] == "Brazil"
+    assert data[0]["best_platform"] == "Betano"
+    assert data[0]["best_odd"] == 2.3
+    assert data[0]["market"] == "group_winner"
+
+
+def test_list_best_odds_returns_empty_list_when_no_odds_exist(client):
+    response = client.get("/odds/best?market=winner")
+
+    assert response.status_code == 200
+    assert response.json() == []

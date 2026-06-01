@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List
 from app.services.scenario_calculator import ScenarioService, get_scenario_service
+from app.services.odds_loader import build_odds_dict_from_db
 
 from sqlmodel import Session, select
 
-from app.models import Scenario, User
+from app.models import Scenario, User, Odd
 
 from app.database import get_session
 
@@ -13,11 +14,14 @@ from app.schemas import (
     ScenarioCalculateResponse,
     ScenarioSaveResponse,
     ScenarioPublicResponse,
+    ScenarioCalculateFromOddsRequest,
 )
 
 from app.auth.dependencies import get_current_user
 
 from app.services.scenario_mapper import scenario_to_public_response
+
+
 
 
 router = APIRouter(
@@ -191,6 +195,59 @@ def update_scenario_endpoint(
     scenario.base_amount = result["base_amount"]
     scenario.total_bet = result["total_bet"]
     scenario.data = result
+
+    session.add(scenario)
+    session.commit()
+    session.refresh(scenario)
+
+    return scenario
+
+@router.post("/calculate-from-odds", response_model=ScenarioCalculateResponse)
+def calculate_scenario_from_odds_endpoint(
+    request: ScenarioCalculateFromOddsRequest,
+    session: Session = Depends(get_session),
+    service: ScenarioService = Depends(get_scenario_service),
+):
+    odds = build_odds_dict_from_db(
+        session=session,
+        teams=request.teams,
+        market=request.market,
+    )
+
+    return service.calculate(
+        teams=request.teams,
+        odds=odds,
+        bet_weights=request.bet_weights,
+        base_amount=request.base_amount,
+    )
+
+@router.post("/save-from-odds", response_model=ScenarioSaveResponse)
+def save_scenario_from_odds_endpoint(
+    request: ScenarioCalculateFromOddsRequest,
+    session: Session = Depends(get_session),
+    service: ScenarioService = Depends(get_scenario_service),
+    current_user: User = Depends(get_current_user),
+):
+    odds = build_odds_dict_from_db(
+        session=session,
+        teams=request.teams,
+        market=request.market,
+    )
+
+    result = service.calculate(
+        teams=request.teams,
+        odds=odds,
+        bet_weights=request.bet_weights,
+        base_amount=request.base_amount,
+    )
+
+    scenario = Scenario(
+        name=request.name,
+        base_amount=result["base_amount"],
+        total_bet=result["total_bet"],
+        data=result,
+        user_id=current_user.id,
+    )
 
     session.add(scenario)
     session.commit()

@@ -4,7 +4,7 @@ from sqlmodel import Session, select
 
 from app.database import get_session
 from app.models import Odd
-from app.schemas import OddCreateRequest, OddResponse
+from app.schemas import OddCreateRequest, OddResponse, BestOddResponse
 
 from datetime import datetime, timezone
 
@@ -107,3 +107,30 @@ def list_odds_endpoint(
     odds = session.exec(statement).all()
 
     return odds
+
+
+@router.get("/best", response_model=List[BestOddResponse])
+def list_best_odds_endpoint(
+    market: str = Query(default="winner"),
+    session: Session = Depends(get_session),
+):
+    statement = select(Odd).where(Odd.market == market)
+    odds = session.exec(statement).all()
+
+    best_by_team = {}
+
+    for odd in odds:
+        current_best = best_by_team.get(odd.team)
+
+        if current_best is None or odd.odd > current_best.odd:
+            best_by_team[odd.team] = odd
+
+    return [
+        BestOddResponse(
+            team=odd.team,
+            best_platform=odd.platform,
+            best_odd=odd.odd,
+            market=odd.market,
+        )
+        for odd in best_by_team.values()
+    ]

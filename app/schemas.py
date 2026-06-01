@@ -68,3 +68,17 @@ class OddResponse(BaseModel):
     odd: float
     source_url: Optional[str]
     scraped_at: datetime
+
+class BestOddResponse(BaseModel):
+    team: str
+    best_platform: str
+    best_odd: float
+    market: str
+
+
+class ScenarioCalculateFromOddsRequest(BaseModel):
+    name: str = "Untitled scenario"
+    teams: List[str]
+    bet_weights: Dict[str, float]
+    base_amount: float = Field(gt=0)
+    market: str = "winner"
