@@ -743,3 +743,23 @@ session.add(odd): stage object for insertion.
 session.commit(): persist to the database.
 session.refresh(odd): reload the object so generated fields like id are available.
 response_model=OddResponse: FastAPI serializes the returned object into the public response shape.
+
+# Scraper
+
+base.py:
+```py
+from abc import ABC, abstractmethod
+from typing import List
+
+from app.schemas import OddCreateRequest
+
+
+class OddsProvider(ABC):
+    @abstractmethod
+    def fetch_winner_odds(self) -> List[OddCreateRequest]:
+        pass
+```
+The purpose of this class is to define a common interface for other classes. Any class that claims to be an odds provider must implement a method called `fetch_winner_odds`, and that method must return a list of `OddCreateRequest` objects.
+Python has a built-in module called `abc`, which stands for _Abstract Base Classes_.
+`abstactmethod` s a decorator used to mark a method as required, but not implemented yet. Together, they let you define a class that works like a contract.
+`class OddsProvider(ABC):` means this class should behave like an abstract base class and enforce abstract methods.

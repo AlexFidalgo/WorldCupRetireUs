@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Betano Manual Test",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "tests.scrapers.manual_test_betano",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ]
+}
