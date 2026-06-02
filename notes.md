@@ -778,5 +778,5 @@ Run the frontend
 npm run dev
 ```
 
-Vite will usually start on `http://localhost:5173`.
+Vite will start on `http://localhost:5173`.
 
