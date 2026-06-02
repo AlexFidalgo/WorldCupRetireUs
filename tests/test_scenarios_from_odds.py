@@ -95,6 +95,51 @@ def test_calculate_scenario_from_odds_returns_400_when_team_has_no_odds(client):
     assert response.status_code == 400
     assert response.json()["detail"] == "Missing odds for teams: Argentina"
 
+
+def test_calculate_scenario_from_stored_odds_uses_platform_priority_for_ties(client):
+    client.post(
+        "/odds/",
+        json={
+            "team": "Brazil",
+            "platform": "Betano",
+            "market": "winner",
+            "odd": 9.5,
+            "source_url": "https://example.com/brazil-betano",
+        },
+    )
+
+    client.post(
+        "/odds/",
+        json={
+            "team": "Brazil",
+            "platform": "Bet365",
+            "market": "winner",
+            "odd": 9.5,
+            "source_url": "https://example.com/brazil-bet365",
+        },
+    )
+
+    response = client.post(
+        "/scenarios/calculate-from-odds",
+        json={
+            "teams": ["Brazil"],
+            "bet_weights": {
+                "Brazil": 2,
+            },
+            "base_amount": 10,
+            "market": "winner",
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data["rows"]) == 1
+    assert data["rows"][0]["team"] == "Brazil"
+    assert data["rows"][0]["best_company"] == "Betano"
+    assert data["rows"][0]["best_odd"] == 9.5
+
 def test_save_scenario_from_stored_odds(client):
     headers = create_user_and_login(client, "alex")
 

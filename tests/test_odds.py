@@ -264,6 +264,22 @@ def test_list_best_odds_returns_empty_list_when_no_odds_exist(client):
     assert response.json() == []
 
 
+def test_list_best_odds_uses_platform_priority_when_odds_are_equal(client):
+    client.post("/odds/", json=create_odd_payload("Brazil", "Betano", "winner", 9.5))
+    client.post("/odds/", json=create_odd_payload("Brazil", "Bet365", "winner", 9.5))
+
+    response = client.get("/odds/best?market=winner")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]["team"] == "Brazil"
+    assert data[0]["best_platform"] == "Betano"
+    assert data[0]["best_odd"] == 9.5
+
+
 def test_import_manual_odds_from_file(client, tmp_path, monkeypatch):
     odds_file = tmp_path / "manual_winner_odds.csv"
     odds_file.write_text(
@@ -271,7 +287,7 @@ def test_import_manual_odds_from_file(client, tmp_path, monkeypatch):
             [
                 "team,platform,odd,market,source_url",
                 "Brasil,Betano,6.5,winner,https://example.com/betano/brasil",
-                "Países Baixos,Bet365,12.0,winner,https://example.com/bet365/paises-baixos",
+                "Holanda,Bet365,12.0,winner,https://example.com/bet365/holanda",
                 "Japao,Betano,80.0,winner,https://example.com/betano/japao",
             ]
         ),
@@ -292,8 +308,8 @@ def test_import_manual_odds_from_file(client, tmp_path, monkeypatch):
 
     assert imported_by_team["brasil"]["platform"] == "Betano"
     assert imported_by_team["brasil"]["odd"] == 6.5
-    assert imported_by_team["paises_baixos"]["platform"] == "Bet365"
-    assert imported_by_team["paises_baixos"]["odd"] == 12.0
+    assert imported_by_team["holanda"]["platform"] == "Bet365"
+    assert imported_by_team["holanda"]["odd"] == 12.0
 
 
 def test_import_manual_odds_updates_existing_rows(client, tmp_path, monkeypatch):

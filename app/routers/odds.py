@@ -6,6 +6,7 @@ from app.database import get_session
 from app.models import Odd
 from app.schemas import OddCreateRequest, OddResponse, BestOddResponse
 from app.scrapers.manual_file import ManualFileOddsProvider
+from app.services.odds_selection import is_better_odd_candidate
 from app.services.odds_scraper import OddsScraperService, get_odds_scraper_service
 
 from datetime import datetime, timezone
@@ -140,7 +141,12 @@ def list_best_odds_endpoint(
     for odd in odds:
         current_best = best_by_team.get(odd.team)
 
-        if current_best is None or odd.odd > current_best.odd:
+        if current_best is None or is_better_odd_candidate(
+            candidate_odd=odd.odd,
+            candidate_platform=odd.platform,
+            current_odd=current_best.odd,
+            current_platform=current_best.platform,
+        ):
             best_by_team[odd.team] = odd
 
     return [

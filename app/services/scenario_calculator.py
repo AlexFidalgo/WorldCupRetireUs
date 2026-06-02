@@ -1,4 +1,6 @@
 from typing import Dict, List
+from app.services.odds_selection import select_best_platform_from_dict
+
 class ScenarioService:
     def calculate(
         self,
@@ -64,12 +66,7 @@ def calculate_scenario(
     for team in teams:
         team_odds = odds.get(team, {})
 
-        if not team_odds:
-            best_odd = 0
-            best_company = None
-        else:
-            best_company = max(team_odds, key=team_odds.get)
-            best_odd = team_odds[best_company]
+        best_company, best_odd = select_best_platform_from_dict(team_odds)
 
         weight = bet_weights.get(team, 0)
         bet_amount = weight * base_amount

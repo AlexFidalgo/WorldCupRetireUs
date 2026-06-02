@@ -763,3 +763,20 @@ The purpose of this class is to define a common interface for other classes. Any
 Python has a built-in module called `abc`, which stands for _Abstract Base Classes_.
 `abstactmethod` s a decorator used to mark a method as required, but not implemented yet. Together, they let you define a class that works like a contract.
 `class OddsProvider(ABC):` means this class should behave like an abstract base class and enforce abstract methods.
+
+# Frontend
+
+```sh
+npm create vite@latest frontend -- --template react-ts
+cd frontend
+npm install
+npm install react-router-dom
+```
+
+Run the frontend
+```sh
+npm run dev
+```
+
+Vite will usually start on `http://localhost:5173`.
+

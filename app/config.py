@@ -1,4 +1,5 @@
 import os
+import csv
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -22,6 +23,7 @@ ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60))
 APP_DIR = Path(__file__).resolve().parent
 MANUAL_ODDS_FILE = APP_DIR / "data" / "manual_winner_odds.csv"
+PLATFORM_PRIORITY_FILE = APP_DIR / "data" / "platform_priority.csv"
 
 TARGET_TEAMS = [
     "brasil",
@@ -31,7 +33,7 @@ TARGET_TEAMS = [
     "inglaterra",
     "franca",
     "portugal",
-    "paises_baixos",
+    "holanda",
     "noruega"
 ]
 
@@ -44,7 +46,28 @@ TEAM_NAME_ALIASES = {
     "frança": "franca",
     "portugal": "portugal",
     "noruega": "noruega",
-    "países baixos": "paises_baixos",
-    "paises baixos": "paises_baixos",
-    "holanda": "paises_baixos",
+    "países baixos": "holanda",
+    "paises baixos": "holanda",
+    "holanda": "holanda",
 }
+
+
+def load_platform_priorities() -> dict[str, int]:
+    priorities = {}
+
+    with PLATFORM_PRIORITY_FILE.open("r", encoding="utf-8") as file:
+        reader = csv.DictReader(file)
+
+        for row in reader:
+            if not row["platform"] or not row["priority"]:
+                continue
+            priorities[row["platform"]] = int(row["priority"])
+
+    return priorities
+
+
+PLATFORM_PRIORITIES = load_platform_priorities()
+
+
+def get_platform_priority(platform: str) -> int:
+    return PLATFORM_PRIORITIES.get(platform, 9999)
