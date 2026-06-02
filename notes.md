@@ -1,5 +1,13 @@
 # Running app
+```sh
 uvicorn app.main:app --reload
+```
+
+Run the frontend
+```sh
+cd frontend
+npm run dev
+```
 
 Uvicorn is the thing that:
 - listens on a port (e.g., 127.0.0.1:8000)

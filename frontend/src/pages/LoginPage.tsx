@@ -1,5 +1,5 @@
 import { FormEvent, useState } from "react";
-import { login } from "../api/auth";
+import { login, signUp } from "../api/auth";
 
 type LoginPageProps = {
   onLoginSuccess: () => void;
@@ -9,11 +9,13 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitMode, setSubmitMode] = useState<"login" | "signup" | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSubmitting(true);
+    setSubmitMode("login");
     setErrorMessage("");
 
     try {
@@ -27,13 +29,35 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
       }
     } finally {
       setIsSubmitting(false);
+      setSubmitMode(null);
+    }
+  }
+
+  async function handleSignUp() {
+    setIsSubmitting(true);
+    setSubmitMode("signup");
+    setErrorMessage("");
+
+    try {
+      await signUp(username, password);
+      await login(username, password);
+      onLoginSuccess();
+    } catch (error) {
+      if (error instanceof Error) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage("Sign up failed");
+      }
+    } finally {
+      setIsSubmitting(false);
+      setSubmitMode(null);
     }
   }
 
   return (
     <main>
       <h1>WorldCupRetireUs</h1>
-      <p>Login to manage betting scenarios.</p>
+      <p>Login or create an account to manage betting scenarios.</p>
 
       <form onSubmit={handleSubmit}>
         <div>
@@ -60,9 +84,19 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
           />
         </div>
 
-        <button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Logging in..." : "Login"}
-        </button>
+        <div>
+          <button type="submit" disabled={isSubmitting}>
+            {isSubmitting && submitMode === "login" ? "Logging in..." : "Login"}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSignUp}
+            disabled={isSubmitting || !username || !password}
+          >
+            {isSubmitting && submitMode === "signup" ? "Creating account..." : "Sign Up"}
+          </button>
+        </div>
 
         {errorMessage ? <p>{errorMessage}</p> : null}
       </form>

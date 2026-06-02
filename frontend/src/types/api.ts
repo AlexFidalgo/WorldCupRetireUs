@@ -34,3 +34,8 @@ export type ScenarioCalculateFromOddsRequest = {
   base_amount: number;
   market: string;
 };
+
+export type UserResponse = {
+  id: number;
+  username: string;
+};
