@@ -1,4 +1,4 @@
-from conftest import create_user_and_login
+from tests.helpers import create_user_and_login
 
 def test_calculate_scenario_from_stored_odds(client):
     client.post(

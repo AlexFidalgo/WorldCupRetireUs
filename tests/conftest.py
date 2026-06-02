@@ -5,6 +5,7 @@ from sqlmodel.pool import StaticPool
 
 from app.database import get_session
 from app.main import app
+from tests.helpers import create_user_and_login
 
 
 @pytest.fixture(name="session")
@@ -33,26 +34,3 @@ def client_fixture(session: Session):
     yield client
 
     app.dependency_overrides.clear()
-
-def create_user_and_login(client, username: str, password: str = "password123"):
-    client.post(
-        "/users/",
-        json={
-            "username": username,
-            "password": password,
-        },
-    )
-
-    login_response = client.post(
-        "/auth/login",
-        data={
-            "username": username,
-            "password": password,
-        },
-    )
-
-    token = login_response.json()["access_token"]
-
-    return {
-        "Authorization": f"Bearer {token}"
-    }

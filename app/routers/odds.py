@@ -5,6 +5,8 @@ from sqlmodel import Session, select
 from app.database import get_session
 from app.models import Odd
 from app.schemas import OddCreateRequest, OddResponse, BestOddResponse
+from app.scrapers.manual_file import ManualFileOddsProvider
+from app.services.odds_scraper import OddsScraperService, get_odds_scraper_service
 
 from datetime import datetime, timezone
 
@@ -53,6 +55,22 @@ def create_odd_endpoint(
     session.refresh(odd)
 
     return odd
+
+
+@router.post("/import/manual", response_model=List[OddResponse])
+def import_manual_odds_endpoint(
+    session: Session = Depends(get_session),
+    scraper_service: OddsScraperService = Depends(get_odds_scraper_service),
+):
+    provider = ManualFileOddsProvider()
+
+    try:
+        return scraper_service.scrape_winner_odds(
+            provider=provider,
+            session=session,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @router.get("/", response_model=List[OddResponse])

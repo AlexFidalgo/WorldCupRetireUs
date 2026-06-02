@@ -1,3 +1,6 @@
+from app import config
+
+
 def create_odd_payload(
     team: str = "Brazil",
     platform: str = "Bet365",
@@ -259,3 +262,85 @@ def test_list_best_odds_returns_empty_list_when_no_odds_exist(client):
 
     assert response.status_code == 200
     assert response.json() == []
+
+
+def test_import_manual_odds_from_file(client, tmp_path, monkeypatch):
+    odds_file = tmp_path / "manual_winner_odds.csv"
+    odds_file.write_text(
+        "\n".join(
+            [
+                "team,platform,odd,market,source_url",
+                "Brasil,Betano,6.5,winner,https://example.com/betano/brasil",
+                "Países Baixos,Bet365,12.0,winner,https://example.com/bet365/paises-baixos",
+                "Japao,Betano,80.0,winner,https://example.com/betano/japao",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(config, "MANUAL_ODDS_FILE", odds_file)
+
+    response = client.post("/odds/import/manual")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 2
+
+    imported_by_team = {item["team"]: item for item in data}
+
+    assert imported_by_team["brasil"]["platform"] == "Betano"
+    assert imported_by_team["brasil"]["odd"] == 6.5
+    assert imported_by_team["paises_baixos"]["platform"] == "Bet365"
+    assert imported_by_team["paises_baixos"]["odd"] == 12.0
+
+
+def test_import_manual_odds_updates_existing_rows(client, tmp_path, monkeypatch):
+    odds_file = tmp_path / "manual_winner_odds.csv"
+    monkeypatch.setattr(config, "MANUAL_ODDS_FILE", odds_file)
+
+    odds_file.write_text(
+        "\n".join(
+            [
+                "team,platform,odd,market,source_url",
+                "Brasil,Betano,6.5,winner,https://example.com/betano/brasil-v1",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    first_response = client.post("/odds/import/manual")
+
+    assert first_response.status_code == 200
+    assert len(first_response.json()) == 1
+
+    odds_file.write_text(
+        "\n".join(
+            [
+                "team,platform,odd,market,source_url",
+                "Brasil,Betano,6.1,winner,https://example.com/betano/brasil-v2",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    second_response = client.post("/odds/import/manual")
+
+    assert second_response.status_code == 200
+
+    data = second_response.json()
+
+    assert len(data) == 1
+    assert data[0]["team"] == "brasil"
+    assert data[0]["odd"] == 6.1
+    assert data[0]["source_url"] == "https://example.com/betano/brasil-v2"
+
+    list_response = client.get("/odds/?team=brasil&platform=Betano&market=winner")
+
+    assert list_response.status_code == 200
+
+    all_odds = list_response.json()
+
+    assert len(all_odds) == 1
+    assert all_odds[0]["odd"] == 6.1
