@@ -1,8 +1,9 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlmodel import Session, select
 
 from app.auth.jwt import decode_access_token
+from app.config import ADMIN_SECRET
 from app.database import get_session
 from app.models import User
 
@@ -41,3 +42,8 @@ def get_current_user(
         )
 
     return user
+
+
+def verify_admin_secret(x_admin_secret: str = Header(...)):
+    if not ADMIN_SECRET or x_admin_secret != ADMIN_SECRET:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")

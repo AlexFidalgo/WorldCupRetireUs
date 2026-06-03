@@ -2,6 +2,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlmodel import Session, select
 
+from app.auth.dependencies import verify_admin_secret
 from app.config import resolve_team_name
 from app.database import get_session
 from app.models import Odd
@@ -63,6 +64,7 @@ def create_odd_endpoint(
 def import_manual_odds_endpoint(
     session: Session = Depends(get_session),
     scraper_service: OddsScraperService = Depends(get_odds_scraper_service),
+    _: None = Depends(verify_admin_secret),
 ):
     provider = ManualFileOddsProvider()
 

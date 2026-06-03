@@ -12,7 +12,7 @@ export async function calculateScenarioFromOdds(
     `${getApiBaseUrl()}/scenarios/calculate-from-odds`,
     {
       method: "POST",
-      headers: buildHeaders(),
+      headers: buildHeaders(true),
       body: JSON.stringify(payload),
     },
   );
@@ -34,7 +34,7 @@ export async function saveScenarioFromOdds(
     `${getApiBaseUrl()}/scenarios/save-from-odds`,
     {
       method: "POST",
-      headers: buildHeaders(),
+      headers: buildHeaders(true),
       body: JSON.stringify(payload),
     },
   );

@@ -21,6 +21,7 @@ def resolve_team_name(raw_name: str) -> str | None:
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60))
+ADMIN_SECRET = os.getenv("ADMIN_SECRET")
 APP_DIR = Path(__file__).resolve().parent
 MANUAL_ODDS_FILE = APP_DIR / "data" / "manual_winner_odds.csv"
 PLATFORM_PRIORITY_FILE = APP_DIR / "data" / "platform_priority.csv"

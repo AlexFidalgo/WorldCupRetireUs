@@ -20,6 +20,11 @@ The `--reload` flag enables auto-reload on code changes. With --reload:
 - Any change → server restarts automatically
 Use it only in development. Never in production.
 
+# Updating odds
+```sh
+curl -X POST http://127.0.0.1:8000/odds/import/manual -H "X-Admin-Secret: your-secret-here"
+```
+
 # Swagger UI
 http://127.0.0.1:8000/docs
 This is auto-generated documentation.
