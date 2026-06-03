@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import type { ScenarioCalculateFromOddsRequest } from "../types/api";
 
-type ScenarioFormProps = {
+type DirectBetFormProps = {
   onCalculate: (payload: ScenarioCalculateFromOddsRequest) => Promise<void>;
   onSave: (payload: ScenarioCalculateFromOddsRequest) => Promise<void>;
   isCalculating: boolean;
@@ -44,22 +44,24 @@ const TEAM_DISPLAY: Record<string, string> = {
   noruega: "Noruega",
 };
 
-export function ScenarioForm({
+function fmtBRL(n: number) {
+  return `R$${n.toFixed(2).replace(".", ",")}`;
+}
+
+export function DirectBetForm({
   onCalculate,
   onSave,
   isCalculating,
   isSaving,
-}: ScenarioFormProps) {
-  const [name, setName] = useState("Cenário vencedor");
-  const [baseAmount, setBaseAmount] = useState("10");
-  const [market] = useState("winner");
+}: DirectBetFormProps) {
+  const [name, setName] = useState("Cenário direto");
   const [selectedTeams, setSelectedTeams] = useState<string[]>([
     "brasil",
     "argentina",
   ]);
-  const [weights, setWeights] = useState<Record<string, string>>({
-    brasil: "2",
-    argentina: "1",
+  const [amounts, setAmounts] = useState<Record<string, string>>({
+    brasil: "50",
+    argentina: "30",
   });
 
   const isSubmitting = isCalculating || isSaving;
@@ -67,26 +69,21 @@ export function ScenarioForm({
   function handleTeamToggle(team: string) {
     setSelectedTeams((current) => {
       if (current.includes(team)) {
-        const nextTeams = current.filter((item) => item !== team);
-        setWeights((currentWeights) => {
-          const nextWeights = { ...currentWeights };
-          delete nextWeights[team];
-          return nextWeights;
+        const nextTeams = current.filter((t) => t !== team);
+        setAmounts((a) => {
+          const next = { ...a };
+          delete next[team];
+          return next;
         });
         return nextTeams;
       }
-
-      setWeights((currentWeights) => ({
-        ...currentWeights,
-        [team]: "1",
-      }));
-
+      setAmounts((a) => ({ ...a, [team]: "10" }));
       return [...current, team];
     });
   }
 
-  function handleWeightChange(team: string, value: string) {
-    setWeights((current) => ({ ...current, [team]: value }));
+  function handleAmountChange(team: string, value: string) {
+    setAmounts((a) => ({ ...a, [team]: value }));
   }
 
   function buildPayload(): ScenarioCalculateFromOddsRequest {
@@ -94,15 +91,15 @@ export function ScenarioForm({
       name,
       teams: selectedTeams,
       bet_weights: Object.fromEntries(
-        selectedTeams.map((team) => [team, Number(weights[team] ?? "0")]),
+        selectedTeams.map((team) => [team, Number(amounts[team] ?? "0")]),
       ),
-      base_amount: Number(baseAmount),
-      market,
+      base_amount: 1,
+      market: "winner",
     };
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleCalculate(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     await onCalculate(buildPayload());
   }
 
@@ -110,23 +107,23 @@ export function ScenarioForm({
     await onSave(buildPayload());
   }
 
-  const totalWeight = selectedTeams.reduce(
-    (sum, team) => sum + Number(weights[team] ?? 0),
+  const totalAmount = selectedTeams.reduce(
+    (sum, team) => sum + Number(amounts[team] ?? 0),
     0,
   );
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      {/* Scenario name */}
+    <form onSubmit={handleCalculate} className="space-y-5">
+      {/* Name */}
       <div>
         <label
-          htmlFor="scenario-name"
+          htmlFor="direct-scenario-name"
           className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5"
         >
           Nome do cenário
         </label>
         <input
-          id="scenario-name"
+          id="direct-scenario-name"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -136,46 +133,19 @@ export function ScenarioForm({
         />
       </div>
 
-      {/* Base amount + market row */}
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label
-            htmlFor="base-amount"
-            className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5"
-          >
-            Valor base (R$)
-          </label>
-          <input
-            id="base-amount"
-            type="number"
-            min="0.01"
-            step="0.01"
-            value={baseAmount}
-            onChange={(e) => setBaseAmount(e.target.value)}
-            disabled={isSubmitting}
-            required
-            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-colors disabled:opacity-50"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
-            Mercado
-          </label>
-          <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2.5 text-slate-500 text-sm capitalize">
-            {market}
-          </div>
-        </div>
-      </div>
-
       {/* Teams */}
       <div>
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-            Seleções e pesos
+            Valor por seleção (R$)
           </span>
           {selectedTeams.length > 0 && (
             <span className="text-xs text-slate-500">
-              {selectedTeams.length} selecionadas · peso total {totalWeight.toFixed(2)}
+              {selectedTeams.length} selecionadas ·{" "}
+              <span className="text-emerald-400 font-medium">
+                {fmtBRL(totalAmount)}
+              </span>{" "}
+              total
             </span>
           )}
         </div>
@@ -183,7 +153,6 @@ export function ScenarioForm({
         <div className="space-y-1.5">
           {DEFAULT_TEAMS.map((team) => {
             const isSelected = selectedTeams.includes(team);
-
             return (
               <div
                 key={team}
@@ -213,21 +182,36 @@ export function ScenarioForm({
                   </span>
                 </label>
 
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={weights[team] ?? ""}
-                  onChange={(e) => handleWeightChange(team, e.target.value)}
-                  disabled={!isSelected || isSubmitting}
-                  placeholder="Peso"
-                  className="w-20 flex-shrink-0 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-right text-slate-100 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
-                />
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <span className="text-xs text-slate-500 font-medium">R$</span>
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={amounts[team] ?? ""}
+                    onChange={(e) => handleAmountChange(team, e.target.value)}
+                    disabled={!isSelected || isSubmitting}
+                    placeholder="0,00"
+                    className="w-24 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-right text-slate-100 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
+                  />
+                </div>
               </div>
             );
           })}
         </div>
       </div>
+
+      {/* Summary */}
+      {selectedTeams.length > 0 && (
+        <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg px-4 py-3 flex items-center justify-between">
+          <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">
+            Total apostado
+          </span>
+          <span className="text-lg font-mono font-semibold text-slate-100">
+            {fmtBRL(totalAmount)}
+          </span>
+        </div>
+      )}
 
       {/* Buttons */}
       <div className="flex gap-3">

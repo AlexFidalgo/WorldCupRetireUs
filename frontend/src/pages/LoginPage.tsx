@@ -25,7 +25,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
       if (error instanceof Error) {
         setErrorMessage(error.message);
       } else {
-        setErrorMessage("Login failed");
+        setErrorMessage("Falha ao fazer login");
       }
     } finally {
       setIsSubmitting(false);
@@ -46,7 +46,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
       if (error instanceof Error) {
         setErrorMessage(error.message);
       } else {
-        setErrorMessage("Sign up failed");
+        setErrorMessage("Falha ao criar conta");
       }
     } finally {
       setIsSubmitting(false);
@@ -76,7 +76,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
             WorldCup<span className="text-emerald-400">RetireUs</span>
           </h1>
           <p className="text-slate-400 text-sm mt-1.5">
-            World Cup 2026 betting scenario calculator
+            Calculador de cenários de apostas — Copa do Mundo 2026
           </p>
         </div>
 
@@ -88,7 +88,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
                 htmlFor="username"
                 className="block text-sm font-medium text-slate-300 mb-1.5"
               >
-                Username
+                Usuário
               </label>
               <input
                 id="username"
@@ -97,7 +97,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
                 onChange={(e) => setUsername(e.target.value)}
                 disabled={isSubmitting}
                 required
-                placeholder="Enter your username"
+                placeholder="Digite seu usuário"
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-colors disabled:opacity-50 text-sm"
               />
             </div>
@@ -107,7 +107,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
                 htmlFor="password"
                 className="block text-sm font-medium text-slate-300 mb-1.5"
               >
-                Password
+                Senha
               </label>
               <input
                 id="password"
@@ -116,7 +116,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isSubmitting}
                 required
-                placeholder="Enter your password"
+                placeholder="Digite sua senha"
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-colors disabled:opacity-50 text-sm"
               />
             </div>
@@ -134,8 +134,8 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
                 className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
               >
                 {isSubmitting && submitMode === "login"
-                  ? "Signing in..."
-                  : "Sign In"}
+                  ? "Entrando..."
+                  : "Entrar"}
               </button>
 
               <button
@@ -145,8 +145,8 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
                 className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium py-2.5 rounded-lg border border-slate-700 hover:border-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
               >
                 {isSubmitting && submitMode === "signup"
-                  ? "Creating..."
-                  : "Sign Up"}
+                  ? "Criando..."
+                  : "Criar conta"}
               </button>
             </div>
           </form>

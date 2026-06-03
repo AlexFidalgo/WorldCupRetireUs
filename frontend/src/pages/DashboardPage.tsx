@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { getBestOdds, importManualOdds } from "../api/odds";
-import { calculateScenarioFromOdds } from "../api/scenarios";
+import {
+  calculateScenarioFromOdds,
+  saveScenarioFromOdds,
+} from "../api/scenarios";
+import { DirectBetForm } from "../components/DirectBetForm";
 import { OddsBestTable } from "../components/OddsBestTable";
 import { ScenarioForm } from "../components/ScenarioForm";
 import { ScenarioResult } from "../components/ScenarioResult";
@@ -14,13 +18,17 @@ type DashboardPageProps = {
   onLogout: () => void;
 };
 
+type ScenarioMode = "pesos" | "direto";
+
 export function DashboardPage({ onLogout }: DashboardPageProps) {
   const [isImporting, setIsImporting] = useState(false);
   const [isLoadingOdds, setIsLoadingOdds] = useState(true);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [bestOdds, setBestOdds] = useState<BestOddResponse[]>([]);
   const [scenarioResult, setScenarioResult] =
     useState<ScenarioCalculateResponse | null>(null);
+  const [scenarioMode, setScenarioMode] = useState<ScenarioMode>("pesos");
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -31,11 +39,9 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
       const data = await getBestOdds("winner");
       setBestOdds(data);
     } catch (error) {
-      if (error instanceof Error) {
-        setErrorMessage(error.message);
-      } else {
-        setErrorMessage("Failed to load best odds.");
-      }
+      setErrorMessage(
+        error instanceof Error ? error.message : "Falha ao carregar odds.",
+      );
     } finally {
       setIsLoadingOdds(false);
     }
@@ -45,21 +51,23 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
     void loadBestOdds();
   }, []);
 
-  async function handleImportManualOdds() {
-    setIsImporting(true);
+  function clearMessages() {
     setStatusMessage("");
     setErrorMessage("");
+  }
+
+  async function handleImportManualOdds() {
+    setIsImporting(true);
+    clearMessages();
 
     try {
       await importManualOdds();
       await loadBestOdds();
-      setStatusMessage("Odds imported successfully.");
+      setStatusMessage("Odds importadas com sucesso.");
     } catch (error) {
-      if (error instanceof Error) {
-        setErrorMessage(error.message);
-      } else {
-        setErrorMessage("Failed to import manual odds.");
-      }
+      setErrorMessage(
+        error instanceof Error ? error.message : "Falha ao importar odds.",
+      );
     } finally {
       setIsImporting(false);
     }
@@ -69,20 +77,35 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
     payload: ScenarioCalculateFromOddsRequest,
   ) {
     setIsCalculating(true);
-    setStatusMessage("");
-    setErrorMessage("");
+    clearMessages();
 
     try {
       const result = await calculateScenarioFromOdds(payload);
       setScenarioResult(result);
     } catch (error) {
-      if (error instanceof Error) {
-        setErrorMessage(error.message);
-      } else {
-        setErrorMessage("Failed to calculate scenario.");
-      }
+      setErrorMessage(
+        error instanceof Error ? error.message : "Falha ao calcular cenário.",
+      );
     } finally {
       setIsCalculating(false);
+    }
+  }
+
+  async function handleSaveScenario(payload: ScenarioCalculateFromOddsRequest) {
+    setIsSaving(true);
+    clearMessages();
+
+    try {
+      await saveScenarioFromOdds(payload);
+      const result = await calculateScenarioFromOdds(payload);
+      setScenarioResult(result);
+      setStatusMessage("Cenário salvo com sucesso.");
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Falha ao salvar cenário.",
+      );
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -103,7 +126,7 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
             onClick={onLogout}
             className="text-xs text-slate-400 hover:text-red-400 transition-colors px-3 py-1.5 rounded-lg hover:bg-slate-800 font-medium"
           >
-            Sign out
+            Sair
           </button>
         </div>
       </header>
@@ -130,12 +153,16 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
                 d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
               />
             </svg>
-            {isImporting ? "Importing..." : "Import Odds"}
+            {isImporting ? "Importando..." : "Importar Odds"}
           </button>
 
           {statusMessage && (
             <div className="inline-flex items-center gap-1.5 text-sm text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg">
-              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+              <svg
+                className="w-3.5 h-3.5"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
                 <path
                   fillRule="evenodd"
                   d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -148,7 +175,11 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
 
           {errorMessage && (
             <div className="inline-flex items-center gap-1.5 text-sm text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-lg">
-              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+              <svg
+                className="w-3.5 h-3.5"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
                 <path
                   fillRule="evenodd"
                   d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
@@ -165,15 +196,15 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
           <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
             <div>
               <h2 className="font-semibold text-slate-100 text-sm">
-                Best Winner Odds
+                Melhores Odds — Vencedor
               </h2>
               <p className="text-slate-500 text-xs mt-0.5">
-                Best available odds per team across platforms
+                Melhores odds disponíveis por seleção nas casas de aposta
               </p>
             </div>
             {!isLoadingOdds && bestOdds.length > 0 && (
               <span className="text-xs text-slate-500 bg-slate-800 px-2.5 py-1 rounded-full">
-                {bestOdds.length} teams
+                {bestOdds.length} seleções
               </span>
             )}
           </div>
@@ -199,7 +230,7 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                   />
                 </svg>
-                Loading odds...
+                Carregando odds...
               </div>
             ) : (
               <OddsBestTable odds={bestOdds} />
@@ -209,30 +240,65 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
 
         {/* Scenario section */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          {/* Left: form with mode tabs */}
           <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-800">
-              <h2 className="font-semibold text-slate-100 text-sm">
-                Calculate Scenario
+              <h2 className="font-semibold text-slate-100 text-sm mb-3">
+                Calcular Cenário
               </h2>
-              <p className="text-slate-500 text-xs mt-0.5">
-                Configure teams and bet weights
-              </p>
+              {/* Mode tabs */}
+              <div className="inline-flex rounded-lg bg-slate-800 p-0.5 gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => setScenarioMode("pesos")}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    scenarioMode === "pesos"
+                      ? "bg-slate-700 text-slate-100 shadow-sm"
+                      : "text-slate-400 hover:text-slate-300"
+                  }`}
+                >
+                  Por pesos
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setScenarioMode("direto")}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    scenarioMode === "direto"
+                      ? "bg-slate-700 text-slate-100 shadow-sm"
+                      : "text-slate-400 hover:text-slate-300"
+                  }`}
+                >
+                  Valor direto
+                </button>
+              </div>
             </div>
             <div className="p-6">
-              <ScenarioForm
-                onSubmit={handleCalculateScenario}
-                isSubmitting={isCalculating}
-              />
+              {scenarioMode === "pesos" ? (
+                <ScenarioForm
+                  onCalculate={handleCalculateScenario}
+                  onSave={handleSaveScenario}
+                  isCalculating={isCalculating}
+                  isSaving={isSaving}
+                />
+              ) : (
+                <DirectBetForm
+                  onCalculate={handleCalculateScenario}
+                  onSave={handleSaveScenario}
+                  isCalculating={isCalculating}
+                  isSaving={isSaving}
+                />
+              )}
             </div>
           </div>
 
+          {/* Right: result */}
           <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-800">
               <h2 className="font-semibold text-slate-100 text-sm">
-                Scenario Result
+                Resultado do Cenário
               </h2>
               <p className="text-slate-500 text-xs mt-0.5">
-                Projected returns and breakdown
+                Retornos projetados e detalhamento por seleção
               </p>
             </div>
             <div className="p-6">

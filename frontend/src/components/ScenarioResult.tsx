@@ -13,23 +13,23 @@ const TEAM_FLAGS: Record<string, string> = {
 };
 
 const TEAM_DISPLAY: Record<string, string> = {
-  brasil: "Brazil",
+  brasil: "Brasil",
   argentina: "Argentina",
-  alemanha: "Germany",
-  espanha: "Spain",
-  inglaterra: "England",
-  franca: "France",
+  alemanha: "Alemanha",
+  espanha: "Espanha",
+  inglaterra: "Inglaterra",
+  franca: "França",
   portugal: "Portugal",
-  holanda: "Netherlands",
-  noruega: "Norway",
+  holanda: "Holanda",
+  noruega: "Noruega",
 };
 
 type ScenarioResultProps = {
   result: ScenarioCalculateResponse | null;
 };
 
-function fmt(n: number) {
-  return `€${n.toFixed(2)}`;
+function fmtBRL(n: number) {
+  return `R$${n.toFixed(2).replace(".", ",")}`;
 }
 
 export function ScenarioResult({ result }: ScenarioResultProps) {
@@ -38,9 +38,9 @@ export function ScenarioResult({ result }: ScenarioResultProps) {
       <div className="flex flex-col items-center justify-center py-12 gap-3 text-slate-500">
         <span className="text-4xl opacity-30">📊</span>
         <div className="text-center">
-          <p className="text-sm font-medium">No scenario calculated yet</p>
+          <p className="text-sm font-medium">Nenhum cenário calculado ainda</p>
           <p className="text-xs mt-0.5 text-slate-600">
-            Configure and calculate a scenario to see results
+            Configure e calcule um cenário para ver os resultados aqui
           </p>
         </div>
       </div>
@@ -55,18 +55,18 @@ export function ScenarioResult({ result }: ScenarioResultProps) {
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4">
           <div className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-1">
-            Base Amount
+            Valor Base
           </div>
           <div className="text-xl font-mono font-semibold text-slate-100">
-            {fmt(result.base_amount)}
+            {fmtBRL(result.base_amount)}
           </div>
         </div>
         <div className="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4">
           <div className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-1">
-            Total Bet
+            Total Apostado
           </div>
           <div className="text-xl font-mono font-semibold text-slate-100">
-            {fmt(result.total_bet)}
+            {fmtBRL(result.total_bet)}
           </div>
         </div>
       </div>
@@ -77,19 +77,19 @@ export function ScenarioResult({ result }: ScenarioResultProps) {
           <thead>
             <tr className="border-b border-slate-800 text-left">
               <th className="pb-3 pr-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Team
+                Seleção
               </th>
               <th className="pb-3 pr-3 text-xs font-semibold uppercase tracking-wider text-slate-500 text-right">
                 Odd
               </th>
               <th className="pb-3 pr-3 text-xs font-semibold uppercase tracking-wider text-slate-500 text-right">
-                Bet
+                Aposta
               </th>
               <th className="pb-3 pr-3 text-xs font-semibold uppercase tracking-wider text-slate-500 text-right">
-                Gross
+                Retorno
               </th>
               <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-slate-500 text-right">
-                Net
+                Líquido
               </th>
             </tr>
           </thead>
@@ -111,7 +111,7 @@ export function ScenarioResult({ result }: ScenarioResultProps) {
                       </span>
                       {isBestNet && (
                         <span className="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded font-medium">
-                          Best
+                          Melhor
                         </span>
                       )}
                     </div>
@@ -120,10 +120,10 @@ export function ScenarioResult({ result }: ScenarioResultProps) {
                     {row.best_odd != null ? row.best_odd.toFixed(2) : "—"}
                   </td>
                   <td className="py-2.5 pr-3 text-right font-mono text-slate-300">
-                    {fmt(row.bet_amount)}
+                    {fmtBRL(row.bet_amount)}
                   </td>
                   <td className="py-2.5 pr-3 text-right font-mono text-slate-300">
-                    {fmt(row.gross_return)}
+                    {fmtBRL(row.gross_return)}
                   </td>
                   <td
                     className={`py-2.5 text-right font-mono font-semibold ${
@@ -131,7 +131,7 @@ export function ScenarioResult({ result }: ScenarioResultProps) {
                     }`}
                   >
                     {row.net_result >= 0 ? "+" : ""}
-                    {fmt(row.net_result)}
+                    {fmtBRL(row.net_result)}
                   </td>
                 </tr>
               );

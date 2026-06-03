@@ -35,6 +35,14 @@ export type ScenarioCalculateFromOddsRequest = {
   market: string;
 };
 
+export type ScenarioSaveResponse = {
+  id: number;
+  name: string;
+  base_amount: number;
+  total_bet: number;
+  data: Record<string, unknown>;
+};
+
 export type UserResponse = {
   id: number;
   username: string;

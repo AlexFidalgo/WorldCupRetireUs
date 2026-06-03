@@ -13,15 +13,19 @@ const TEAM_FLAGS: Record<string, string> = {
 };
 
 const TEAM_DISPLAY: Record<string, string> = {
-  brasil: "Brazil",
+  brasil: "Brasil",
   argentina: "Argentina",
-  alemanha: "Germany",
-  espanha: "Spain",
-  inglaterra: "England",
-  franca: "France",
+  alemanha: "Alemanha",
+  espanha: "Espanha",
+  inglaterra: "Inglaterra",
+  franca: "França",
   portugal: "Portugal",
-  holanda: "Netherlands",
-  noruega: "Norway",
+  holanda: "Holanda",
+  noruega: "Noruega",
+};
+
+const MARKET_DISPLAY: Record<string, string> = {
+  winner: "vencedor",
 };
 
 type OddsBestTableProps = {
@@ -33,7 +37,7 @@ export function OddsBestTable({ odds }: OddsBestTableProps) {
     return (
       <div className="flex flex-col items-center justify-center py-10 text-slate-500 text-sm gap-2">
         <span className="text-3xl opacity-50">📋</span>
-        <p>No odds loaded yet. Import odds to get started.</p>
+        <p>Nenhuma odd carregada. Importe as odds para começar.</p>
       </div>
     );
   }
@@ -46,16 +50,16 @@ export function OddsBestTable({ odds }: OddsBestTableProps) {
         <thead>
           <tr className="text-left border-b border-slate-800">
             <th className="pb-3 pr-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Team
+              Seleção
             </th>
             <th className="pb-3 pr-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Platform
+              Casa
             </th>
             <th className="pb-3 pr-4 text-xs font-semibold uppercase tracking-wider text-slate-500 text-right">
-              Best Odd
+              Melhor Odd
             </th>
             <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-slate-500 text-right">
-              Market
+              Mercado
             </th>
           </tr>
         </thead>
@@ -77,7 +81,7 @@ export function OddsBestTable({ odds }: OddsBestTableProps) {
                   </span>
                   {idx === 0 && (
                     <span className="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded font-medium">
-                      Best
+                      Maior
                     </span>
                   )}
                 </div>
@@ -87,8 +91,8 @@ export function OddsBestTable({ odds }: OddsBestTableProps) {
                 {item.best_odd.toFixed(2)}
               </td>
               <td className="py-3 text-right">
-                <span className="inline-block bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-xs text-slate-400 capitalize">
-                  {item.market}
+                <span className="inline-block bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-xs text-slate-400">
+                  {MARKET_DISPLAY[item.market] ?? item.market}
                 </span>
               </td>
             </tr>

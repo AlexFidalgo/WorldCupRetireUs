@@ -136,10 +136,11 @@ def list_best_odds_endpoint(
     statement = select(Odd).where(Odd.market == market)
     odds = session.exec(statement).all()
 
-    best_by_team = {}
+    best_by_team: dict[str, Odd] = {}
 
     for odd in odds:
-        current_best = best_by_team.get(odd.team)
+        team_key = odd.team.lower()
+        current_best = best_by_team.get(team_key)
 
         if current_best is None or is_better_odd_candidate(
             candidate_odd=odd.odd,
@@ -147,14 +148,14 @@ def list_best_odds_endpoint(
             current_odd=current_best.odd,
             current_platform=current_best.platform,
         ):
-            best_by_team[odd.team] = odd
+            best_by_team[team_key] = odd
 
     return [
         BestOddResponse(
-            team=odd.team,
+            team=team_key,
             best_platform=odd.platform,
             best_odd=odd.odd,
             market=odd.market,
         )
-        for odd in best_by_team.values()
+        for team_key, odd in best_by_team.items()
     ]

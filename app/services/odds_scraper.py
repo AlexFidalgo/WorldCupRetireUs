@@ -1,3 +1,4 @@
+from sqlalchemy import func
 from sqlmodel import Session, select
 
 from app.models import Odd
@@ -16,7 +17,7 @@ class OddsScraperService:
 
         for scraped_odd in scraped_odds:
             statement = select(Odd).where(
-                Odd.team == scraped_odd.team,
+                func.lower(Odd.team) == scraped_odd.team.lower(),
                 Odd.platform == scraped_odd.platform,
                 Odd.market == scraped_odd.market,
             )
@@ -24,6 +25,7 @@ class OddsScraperService:
             existing_odd = session.exec(statement).first()
 
             if existing_odd is not None:
+                existing_odd.team = scraped_odd.team  # normalize casing
                 existing_odd.odd = scraped_odd.odd
                 existing_odd.source_url = scraped_odd.source_url
                 session.add(existing_odd)
