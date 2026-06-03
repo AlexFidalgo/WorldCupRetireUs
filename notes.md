@@ -1,4 +1,4 @@
-# Running app
+# Running app (local dev)
 ```sh
 uvicorn app.main:app --reload
 ```
@@ -43,6 +43,101 @@ On Linux/Mac, `curl` is the real thing — no alias issues:
 ```bash
 curl -X POST http://127.0.0.1:8000/odds/import/manual -H "X-Admin-Secret: change-me"
 ```
+
+
+---
+
+# GCP Deployment (e2-micro, us-central1)
+
+## One-time server setup
+
+```bash
+# On the VM after SSH in
+sudo apt update && sudo apt install -y python3-pip python3-venv nginx git
+
+# Clone repo
+git clone <your-repo-url> ~/WorldCupRetireUs
+cd ~/WorldCupRetireUs
+
+# Python env
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# Build frontend
+cd frontend && npm install && npm run build && cd ..
+
+# Copy .env
+# Create /home/<user>/WorldCupRetireUs/.env with your real values:
+# SECRET_KEY=...
+# ADMIN_SECRET=...
+# ALLOWED_ORIGINS=http://<your-vm-ip>
+```
+
+## nginx config
+Create `/etc/nginx/sites-available/worldcup`:
+```nginx
+server {
+    listen 80;
+
+    # React app
+    location / {
+        root /home/<user>/WorldCupRetireUs/frontend/dist;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # API — proxy to uvicorn
+    location ~ ^/(odds|scenarios|auth|users)/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+```bash
+sudo ln -s /etc/nginx/sites-available/worldcup /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+## Run uvicorn as a systemd service
+Create `/etc/systemd/system/worldcup.service`:
+```ini
+[Unit]
+Description=WorldCupRetireUs API
+After=network.target
+
+[Service]
+User=<user>
+WorkingDirectory=/home/<user>/WorldCupRetireUs
+EnvironmentFile=/home/<user>/WorldCupRetireUs/.env
+ExecStart=/home/<user>/WorldCupRetireUs/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+```bash
+sudo systemctl enable worldcup
+sudo systemctl start worldcup
+sudo systemctl status worldcup
+```
+
+## Updating the app
+```bash
+cd ~/WorldCupRetireUs
+git pull
+source .venv/bin/activate
+pip install -r requirements.txt        # if deps changed
+cd frontend && npm run build && cd ..  # if frontend changed
+sudo systemctl restart worldcup
+```
+
+## Updating odds (from the server or locally)
+```bash
+curl -X POST http://<vm-ip>/odds/import/manual -H "X-Admin-Secret: <your-secret>"
+```
+
+---
 
 # Swagger UI
 http://127.0.0.1:8000/docs

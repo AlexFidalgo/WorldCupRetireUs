@@ -1,13 +1,16 @@
+import os
+from pathlib import Path
 from sqlmodel import SQLModel, Session, create_engine
 
 from app import models  # noqa: F401
 
 
-DATABASE_URL = "sqlite:///./worldcup_retire_us.db"
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{_PROJECT_ROOT / 'worldcup_retire_us.db'}")
 
 engine = create_engine(
     DATABASE_URL,
-    echo=True,
+    echo=os.getenv("DB_ECHO", "false").lower() == "true",
 )
 
 

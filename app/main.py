@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -7,10 +8,8 @@ from app.database import create_db_and_tables
 from app.routers import scenarios, users, auth, odds
 
 
-ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
+_origins_env = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
+ALLOWED_ORIGINS = [o.strip() for o in _origins_env.split(",") if o.strip()]
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
