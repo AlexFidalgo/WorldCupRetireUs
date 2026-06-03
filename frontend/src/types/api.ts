@@ -43,6 +43,20 @@ export type ScenarioSaveResponse = {
   data: Record<string, unknown>;
 };
 
+export type ScenarioPublicResponse = {
+  id: number;
+  name: string;
+  base_amount: number;
+  total_bet: number;
+  data: {
+    base_amount: number;
+    total_bet: number;
+    rows: ScenarioRow[];
+  };
+  user_id: number;
+  username: string;
+};
+
 export type UserResponse = {
   id: number;
   username: string;

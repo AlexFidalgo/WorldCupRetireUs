@@ -2,6 +2,7 @@ import { buildHeaders, getApiBaseUrl } from "./client";
 import type {
   ScenarioCalculateFromOddsRequest,
   ScenarioCalculateResponse,
+  ScenarioPublicResponse,
   ScenarioSaveResponse,
 } from "../types/api";
 
@@ -46,4 +47,22 @@ export async function saveScenarioFromOdds(
   }
 
   return response.json() as Promise<ScenarioSaveResponse>;
+}
+
+export async function getScenarios(): Promise<ScenarioPublicResponse[]> {
+  const response = await fetch(
+    `${getApiBaseUrl()}/scenarios/?sort_by=id&sort_order=desc&limit=100`,
+    {
+      method: "GET",
+      headers: buildHeaders(true),
+    },
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    const message = errorData?.detail ?? "Falha ao carregar cenários";
+    throw new Error(message);
+  }
+
+  return response.json() as Promise<ScenarioPublicResponse[]>;
 }

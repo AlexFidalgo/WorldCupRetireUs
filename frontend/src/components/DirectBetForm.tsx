@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import type { ScenarioCalculateFromOddsRequest } from "../types/api";
 
 type DirectBetFormProps = {
+  username: string;
   onCalculate: (payload: ScenarioCalculateFromOddsRequest) => Promise<void>;
   onSave: (payload: ScenarioCalculateFromOddsRequest) => Promise<void>;
   isCalculating: boolean;
@@ -49,12 +50,13 @@ function fmtBRL(n: number) {
 }
 
 export function DirectBetForm({
+  username,
   onCalculate,
   onSave,
   isCalculating,
   isSaving,
 }: DirectBetFormProps) {
-  const [name, setName] = useState("Cenário direto");
+  const [name, setName] = useState(`${username} é foda`);
   const [selectedTeams, setSelectedTeams] = useState<string[]>([
     "brasil",
     "argentina",

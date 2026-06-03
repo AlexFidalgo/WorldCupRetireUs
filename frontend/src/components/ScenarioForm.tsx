@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import type { ScenarioCalculateFromOddsRequest } from "../types/api";
 
 type ScenarioFormProps = {
+  username: string;
   onCalculate: (payload: ScenarioCalculateFromOddsRequest) => Promise<void>;
   onSave: (payload: ScenarioCalculateFromOddsRequest) => Promise<void>;
   isCalculating: boolean;
@@ -45,12 +46,13 @@ const TEAM_DISPLAY: Record<string, string> = {
 };
 
 export function ScenarioForm({
+  username,
   onCalculate,
   onSave,
   isCalculating,
   isSaving,
 }: ScenarioFormProps) {
-  const [name, setName] = useState("Cenário vencedor");
+  const [name, setName] = useState(`${username} é foda`);
   const [baseAmount, setBaseAmount] = useState("10");
   const [market] = useState("winner");
   const [selectedTeams, setSelectedTeams] = useState<string[]>([

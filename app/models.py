@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 class Scenario(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
 
-    name: str = "puta cenário"
+    name: str
 
     base_amount: float
     total_bet: float

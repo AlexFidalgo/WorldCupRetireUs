@@ -1,4 +1,11 @@
 import type { ScenarioCalculateResponse } from "../types/api";
+import { ImageSlideshow } from "./ImageSlideshow";
+
+const imageModules = import.meta.glob<string>("../assets/*.png", {
+  eager: true,
+  import: "default",
+});
+const FUNNY_IMAGES = Object.values(imageModules);
 
 const TEAM_FLAGS: Record<string, string> = {
   brasil: "🇧🇷",
@@ -35,14 +42,17 @@ function fmtBRL(n: number) {
 export function ScenarioResult({ result }: ScenarioResultProps) {
   if (!result) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 gap-3 text-slate-500">
-        <span className="text-4xl opacity-30">📊</span>
-        <div className="text-center">
-          <p className="text-sm font-medium">Nenhum cenário calculado ainda</p>
-          <p className="text-xs mt-0.5 text-slate-600">
-            Configure e calcule um cenário para ver os resultados aqui
-          </p>
+      <div className="space-y-2">
+        <div className="flex flex-col items-center justify-center py-8 gap-3 text-slate-500">
+          <span className="text-4xl opacity-30">📊</span>
+          <div className="text-center">
+            <p className="text-sm font-medium">Nenhum cenário calculado ainda</p>
+            <p className="text-xs mt-0.5 text-slate-600">
+              Configure e calcule um cenário para ver os resultados aqui
+            </p>
+          </div>
         </div>
+        <ImageSlideshow images={FUNNY_IMAGES} />
       </div>
     );
   }
@@ -50,7 +60,7 @@ export function ScenarioResult({ result }: ScenarioResultProps) {
   const bestNet = Math.max(...result.rows.map((r) => r.net_result));
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 pb-2">
       {/* Summary stats */}
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4">
@@ -139,6 +149,7 @@ export function ScenarioResult({ result }: ScenarioResultProps) {
           </tbody>
         </table>
       </div>
+      <ImageSlideshow images={FUNNY_IMAGES} />
     </div>
   );
 }

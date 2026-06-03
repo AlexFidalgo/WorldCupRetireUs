@@ -9,6 +9,8 @@ cd frontend
 npm run dev
 ```
 
+http://localhost:5173/
+
 Uvicorn is the thing that:
 - listens on a port (e.g., 127.0.0.1:8000)
 - receives HTTP requests

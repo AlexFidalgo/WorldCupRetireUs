@@ -26,6 +26,16 @@ APP_DIR = Path(__file__).resolve().parent
 MANUAL_ODDS_FILE = APP_DIR / "data" / "manual_winner_odds.csv"
 PLATFORM_PRIORITY_FILE = APP_DIR / "data" / "platform_priority.csv"
 
+ALLOWED_USERNAMES = [
+    "alexfidalgo",
+    "caio",
+    "fusco",
+    "griep",
+    "renan",
+    "breno",
+    "brenda"
+]
+
 TARGET_TEAMS = [
     "brasil",
     "argentina",

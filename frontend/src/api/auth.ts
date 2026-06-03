@@ -25,27 +25,35 @@ export async function login(username: string, password: string): Promise<LoginRe
   return data;
 }
 
+export class UsernameNotAllowedError extends Error {
+  available: string[];
+  constructor(available: string[]) {
+    super("username_not_allowed");
+    this.available = available;
+  }
+}
+
 export async function signUp(username: string, password: string): Promise<UserResponse> {
   const response = await fetch(`${getApiBaseUrl()}/users/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      username,
-      password,
-    }),
+    body: JSON.stringify({ username, password }),
   });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => null);
-    const message =
-      errorData?.detail ?? "Failed to create user";
+    const detail = errorData?.detail;
 
-    throw new Error(message);
+    if (detail?.code === "username_not_allowed") {
+      throw new UsernameNotAllowedError(detail.available ?? []);
+    }
+
+    throw new Error(
+      typeof detail === "string" ? detail : "Falha ao criar conta",
+    );
   }
 
-  const data: UserResponse = await response.json();
-
-  return data;
+  return response.json() as Promise<UserResponse>;
 }
