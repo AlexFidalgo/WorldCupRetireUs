@@ -1,4 +1,4 @@
-import { FormEvent, useState } from "react";
+import { useState, type FormEvent } from "react";
 import { login, signUp } from "../api/auth";
 
 type LoginPageProps = {
@@ -55,51 +55,103 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
   }
 
   return (
-    <main>
-      <h1>WorldCupRetireUs</h1>
-      <p>Login or create an account to manage betting scenarios.</p>
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+      {/* Subtle background grid */}
+      <div
+        className="absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage:
+            "linear-gradient(#10b981 1px, transparent 1px), linear-gradient(90deg, #10b981 1px, transparent 1px)",
+          backgroundSize: "40px 40px",
+        }}
+      />
 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="username">Username</label>
-          <input
-            id="username"
-            type="text"
-            value={username}
-            onChange={(event) => setUsername(event.target.value)}
-            disabled={isSubmitting}
-            required
-          />
+      <div className="relative w-full max-w-sm">
+        {/* Brand */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl mb-4">
+            <span className="text-2xl">⚽</span>
+          </div>
+          <h1 className="text-2xl font-bold text-slate-100">
+            WorldCup<span className="text-emerald-400">RetireUs</span>
+          </h1>
+          <p className="text-slate-400 text-sm mt-1.5">
+            World Cup 2026 betting scenario calculator
+          </p>
         </div>
 
-        <div>
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            disabled={isSubmitting}
-            required
-          />
+        {/* Card */}
+        <div className="bg-slate-900 border border-slate-700/60 rounded-2xl p-6 shadow-2xl shadow-black/40">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label
+                htmlFor="username"
+                className="block text-sm font-medium text-slate-300 mb-1.5"
+              >
+                Username
+              </label>
+              <input
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                disabled={isSubmitting}
+                required
+                placeholder="Enter your username"
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-colors disabled:opacity-50 text-sm"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-slate-300 mb-1.5"
+              >
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isSubmitting}
+                required
+                placeholder="Enter your password"
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-colors disabled:opacity-50 text-sm"
+              />
+            </div>
+
+            {errorMessage && (
+              <div className="bg-red-500/10 border border-red-500/25 rounded-lg px-3 py-2.5 text-red-400 text-sm">
+                {errorMessage}
+              </div>
+            )}
+
+            <div className="flex gap-3 pt-1">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              >
+                {isSubmitting && submitMode === "login"
+                  ? "Signing in..."
+                  : "Sign In"}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSignUp}
+                disabled={isSubmitting || !username || !password}
+                className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium py-2.5 rounded-lg border border-slate-700 hover:border-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              >
+                {isSubmitting && submitMode === "signup"
+                  ? "Creating..."
+                  : "Sign Up"}
+              </button>
+            </div>
+          </form>
         </div>
-
-        <div>
-          <button type="submit" disabled={isSubmitting}>
-            {isSubmitting && submitMode === "login" ? "Logging in..." : "Login"}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleSignUp}
-            disabled={isSubmitting || !username || !password}
-          >
-            {isSubmitting && submitMode === "signup" ? "Creating account..." : "Sign Up"}
-          </button>
-        </div>
-
-        {errorMessage ? <p>{errorMessage}</p> : null}
-      </form>
-    </main>
+      </div>
+    </div>
   );
 }
