@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { getScenarios } from "../api/scenarios";
+import { getCurrentUsername } from "../api/client";
+import { deleteScenario, getScenarios } from "../api/scenarios";
 import type { ScenarioPublicResponse } from "../types/api";
 
 const TEAM_DISPLAY: Record<string, string> = {
@@ -50,10 +51,13 @@ function fmtBRL(n: number) {
 }
 
 export function ScenariosList() {
+  const currentUsername = getCurrentUsername();
   const [scenarios, setScenarios] = useState<ScenarioPublicResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [expanded, setExpanded] = useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   async function load() {
     setIsLoading(true);
@@ -74,6 +78,21 @@ export function ScenariosList() {
 
   function toggleExpand(id: number) {
     setExpanded((current) => (current === id ? null : id));
+  }
+
+  async function handleDelete(id: number) {
+    setIsDeleting(true);
+    try {
+      await deleteScenario(id);
+      setScenarios((current) => current.filter((s) => s.id !== id));
+      setConfirmDeleteId(null);
+      if (expanded === id) setExpanded(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Falha ao apagar cenário");
+      setConfirmDeleteId(null);
+    } finally {
+      setIsDeleting(false);
+    }
   }
 
   return (
@@ -149,11 +168,12 @@ export function ScenariosList() {
         {!isLoading && scenarios.length > 0 && (
           <div>
             {/* Table header */}
-            <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-4 px-6 py-2.5 border-b border-slate-800 text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-4 px-6 py-2.5 border-b border-slate-800 text-xs font-semibold uppercase tracking-wider text-slate-500">
               <span>Cenário</span>
               <span className="text-right w-24">Seleções</span>
               <span className="text-right w-24">Valor Base</span>
               <span className="text-right w-24">Total</span>
+              <span className="w-5" />
               <span className="w-5" />
             </div>
 
@@ -165,13 +185,13 @@ export function ScenariosList() {
               return (
                 <div key={scenario.id} className="border-b border-slate-800/50 last:border-0">
                   {/* Main row */}
-                  <button
-                    type="button"
-                    onClick={() => toggleExpand(scenario.id)}
-                    className="w-full grid grid-cols-[1fr_auto_auto_auto_auto] gap-4 px-6 py-3.5 hover:bg-slate-800/30 transition-colors text-left items-center"
-                  >
-                    {/* Name + creator */}
-                    <div className="flex items-center gap-3 min-w-0">
+                  <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-4 px-6 py-3.5 items-center hover:bg-slate-800/30 transition-colors">
+                    {/* Name + creator — clickable for expand */}
+                    <button
+                      type="button"
+                      onClick={() => toggleExpand(scenario.id)}
+                      className="flex items-center gap-3 min-w-0 text-left"
+                    >
                       <div
                         className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 ${avatarColor(scenario.username)}`}
                       >
@@ -185,7 +205,7 @@ export function ScenariosList() {
                           {scenario.username}
                         </div>
                       </div>
-                    </div>
+                    </button>
 
                     {/* Teams count */}
                     <div className="text-right w-24">
@@ -205,7 +225,11 @@ export function ScenariosList() {
                     </div>
 
                     {/* Chevron */}
-                    <div className="w-5 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() => toggleExpand(scenario.id)}
+                      className="w-5 flex justify-center"
+                    >
                       <svg
                         className={`w-4 h-4 text-slate-500 transition-transform duration-150 ${isOpen ? "rotate-180" : ""}`}
                         fill="none"
@@ -214,8 +238,45 @@ export function ScenariosList() {
                       >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
+                    </button>
+
+                    {/* Delete — only for own scenarios */}
+                    <div className="w-5 flex justify-center">
+                      {scenario.username === currentUsername && (
+                        confirmDeleteId === scenario.id ? (
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(scenario.id)}
+                              disabled={isDeleting}
+                              className="text-xs text-red-400 hover:text-red-300 font-medium disabled:opacity-50"
+                            >
+                              Sim
+                            </button>
+                            <span className="text-slate-600">·</span>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeleteId(null)}
+                              className="text-xs text-slate-400 hover:text-slate-300"
+                            >
+                              Não
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDeleteId(scenario.id)}
+                            className="text-slate-600 hover:text-red-400 transition-colors"
+                            title="Apagar cenário"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )
+                      )}
                     </div>
-                  </button>
+                  </div>
 
                   {/* Expanded detail */}
                   {isOpen && rows.length > 0 && (

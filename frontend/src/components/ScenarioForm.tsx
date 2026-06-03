@@ -1,15 +1,16 @@
 import { useState, type FormEvent } from "react";
-import type { ScenarioCalculateFromOddsRequest } from "../types/api";
+import type { BestOddResponse, ScenarioCalculateFromOddsRequest } from "../types/api";
 
 type ScenarioFormProps = {
   username: string;
+  bestOdds: BestOddResponse[];
   onCalculate: (payload: ScenarioCalculateFromOddsRequest) => Promise<void>;
   onSave: (payload: ScenarioCalculateFromOddsRequest) => Promise<void>;
   isCalculating: boolean;
   isSaving: boolean;
 };
 
-const DEFAULT_TEAMS = [
+const ALL_TEAMS = [
   "brasil",
   "argentina",
   "alemanha",
@@ -47,22 +48,22 @@ const TEAM_DISPLAY: Record<string, string> = {
 
 export function ScenarioForm({
   username,
+  bestOdds,
   onCalculate,
   onSave,
   isCalculating,
   isSaving,
 }: ScenarioFormProps) {
+  const oddMap = Object.fromEntries(bestOdds.map((o) => [o.team, o.best_odd]));
+  const sortedTeams = [...ALL_TEAMS].sort(
+    (a, b) => (oddMap[a] ?? Infinity) - (oddMap[b] ?? Infinity),
+  );
+
   const [name, setName] = useState(`${username} é foda`);
   const [baseAmount, setBaseAmount] = useState("10");
   const [market] = useState("winner");
-  const [selectedTeams, setSelectedTeams] = useState<string[]>([
-    "brasil",
-    "argentina",
-  ]);
-  const [weights, setWeights] = useState<Record<string, string>>({
-    brasil: "2",
-    argentina: "1",
-  });
+  const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
+  const [weights, setWeights] = useState<Record<string, string>>({});
 
   const isSubmitting = isCalculating || isSaving;
 
@@ -169,6 +170,25 @@ export function ScenarioForm({
         </div>
       </div>
 
+      {/* Buttons */}
+      <div className="flex gap-3">
+        <button
+          type="submit"
+          disabled={isSubmitting || selectedTeams.length === 0}
+          className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+        >
+          {isCalculating ? "Calculando..." : "Calcular"}
+        </button>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={isSubmitting || selectedTeams.length === 0}
+          className="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-100 font-semibold py-2.5 rounded-lg border border-slate-600 hover:border-slate-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+        >
+          {isSaving ? "Salvando..." : "Salvar"}
+        </button>
+      </div>
+
       {/* Teams */}
       <div>
         <div className="flex items-center justify-between mb-2">
@@ -183,7 +203,7 @@ export function ScenarioForm({
         </div>
 
         <div className="space-y-1.5">
-          {DEFAULT_TEAMS.map((team) => {
+          {sortedTeams.map((team) => {
             const isSelected = selectedTeams.includes(team);
 
             return (
@@ -231,24 +251,6 @@ export function ScenarioForm({
         </div>
       </div>
 
-      {/* Buttons */}
-      <div className="flex gap-3">
-        <button
-          type="submit"
-          disabled={isSubmitting || selectedTeams.length === 0}
-          className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-        >
-          {isCalculating ? "Calculando..." : "Calcular"}
-        </button>
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={isSubmitting || selectedTeams.length === 0}
-          className="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-100 font-semibold py-2.5 rounded-lg border border-slate-600 hover:border-slate-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-        >
-          {isSaving ? "Salvando..." : "Salvar"}
-        </button>
-      </div>
     </form>
   );
 }

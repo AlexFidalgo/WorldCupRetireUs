@@ -23,8 +23,25 @@ The `--reload` flag enables auto-reload on code changes. With --reload:
 Use it only in development. Never in production.
 
 # Updating odds
-```sh
-curl -X POST http://127.0.0.1:8000/odds/import/manual -H "X-Admin-Secret: your-secret-here"
+
+1. Edit `app/data/manual_winner_odds.csv` with the new values
+2. Make sure uvicorn is running
+3. Run this command (note: `curl.exe`, not `curl` — PowerShell's `curl` is a different thing):
+
+```powershell
+curl.exe -X POST http://127.0.0.1:8000/odds/import/manual -H "X-Admin-Secret: change-me"
+```
+
+Restarting uvicorn does NOT update the odds. You must call the endpoint explicitly each time.
+
+Alternative using native PowerShell syntax (no curl.exe needed):
+```powershell
+Invoke-WebRequest -Method POST -Uri "http://127.0.0.1:8000/odds/import/manual" -Headers @{"X-Admin-Secret" = "change-me"}
+```
+
+On Linux/Mac, `curl` is the real thing — no alias issues:
+```bash
+curl -X POST http://127.0.0.1:8000/odds/import/manual -H "X-Admin-Secret: change-me"
 ```
 
 # Swagger UI

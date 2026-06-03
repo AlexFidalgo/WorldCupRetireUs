@@ -42,7 +42,7 @@ export function OddsBestTable({ odds }: OddsBestTableProps) {
     );
   }
 
-  const sorted = [...odds].sort((a, b) => b.best_odd - a.best_odd);
+  const sorted = [...odds].sort((a, b) => a.best_odd - b.best_odd);
 
   return (
     <div className="overflow-x-auto">
@@ -64,7 +64,7 @@ export function OddsBestTable({ odds }: OddsBestTableProps) {
           </tr>
         </thead>
         <tbody>
-          {sorted.map((item, idx) => (
+          {sorted.map((item) => (
             <tr
               key={`${item.team}-${item.market}`}
               className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors"
@@ -74,16 +74,9 @@ export function OddsBestTable({ odds }: OddsBestTableProps) {
                   <span className="text-base leading-none">
                     {TEAM_FLAGS[item.team] ?? "🏳"}
                   </span>
-                  <span
-                    className={`font-medium ${idx === 0 ? "text-emerald-400" : "text-slate-200"}`}
-                  >
+                  <span className="font-medium text-slate-200">
                     {TEAM_DISPLAY[item.team] ?? item.team}
                   </span>
-                  {idx === 0 && (
-                    <span className="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded font-medium">
-                      Maior
-                    </span>
-                  )}
                 </div>
               </td>
               <td className="py-3 pr-4 text-slate-400">{item.best_platform}</td>

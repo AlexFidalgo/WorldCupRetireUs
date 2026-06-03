@@ -49,6 +49,19 @@ export async function saveScenarioFromOdds(
   return response.json() as Promise<ScenarioSaveResponse>;
 }
 
+export async function deleteScenario(id: number): Promise<void> {
+  const response = await fetch(`${getApiBaseUrl()}/scenarios/${id}`, {
+    method: "DELETE",
+    headers: buildHeaders(true),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    const message = errorData?.detail ?? "Falha ao apagar cenário";
+    throw new Error(message);
+  }
+}
+
 export async function getScenarios(): Promise<ScenarioPublicResponse[]> {
   const response = await fetch(
     `${getApiBaseUrl()}/scenarios/?sort_by=id&sort_order=desc&limit=100`,

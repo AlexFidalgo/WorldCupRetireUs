@@ -235,6 +235,7 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
                   {scenarioMode === "pesos" ? (
                     <ScenarioForm
                       username={username}
+                      bestOdds={bestOdds}
                       onCalculate={handleCalculateScenario}
                       onSave={handleSaveScenario}
                       isCalculating={isCalculating}
@@ -243,6 +244,7 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
                   ) : (
                     <DirectBetForm
                       username={username}
+                      bestOdds={bestOdds}
                       onCalculate={handleCalculateScenario}
                       onSave={handleSaveScenario}
                       isCalculating={isCalculating}
