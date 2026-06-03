@@ -2,6 +2,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlmodel import Session, select
 
+from app.config import resolve_team_name
 from app.database import get_session
 from app.models import Odd
 from app.schemas import OddCreateRequest, OddResponse, BestOddResponse
@@ -139,7 +140,7 @@ def list_best_odds_endpoint(
     best_by_team: dict[str, Odd] = {}
 
     for odd in odds:
-        team_key = odd.team.lower()
+        team_key = resolve_team_name(odd.team) or odd.team.lower()
         current_best = best_by_team.get(team_key)
 
         if current_best is None or is_better_odd_candidate(

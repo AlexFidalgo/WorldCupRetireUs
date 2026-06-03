@@ -39,16 +39,25 @@ TARGET_TEAMS = [
 
 TEAM_NAME_ALIASES = {
     "brasil": "brasil",
+    "brazil": "brasil",
     "argentina": "argentina",
     "alemanha": "alemanha",
+    "germany": "alemanha",
     "espanha": "espanha",
+    "spain": "espanha",
     "inglaterra": "inglaterra",
+    "england": "inglaterra",
+    "franca": "franca",
     "frança": "franca",
+    "france": "franca",
     "portugal": "portugal",
     "noruega": "noruega",
+    "norway": "noruega",
     "países baixos": "holanda",
     "paises baixos": "holanda",
     "holanda": "holanda",
+    "netherlands": "holanda",
+    "holland": "holanda",
 }
 
 

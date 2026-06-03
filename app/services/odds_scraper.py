@@ -1,6 +1,7 @@
 from sqlalchemy import func
 from sqlmodel import Session, select
 
+from app.config import resolve_team_name, TEAM_NAME_ALIASES
 from app.models import Odd
 from app.scrapers.base import OddsProvider
 
@@ -16,8 +17,11 @@ class OddsScraperService:
         saved_odds = []
 
         for scraped_odd in scraped_odds:
+            # Match any alias/casing variant of the same team so old rows are updated
+            canonical = resolve_team_name(scraped_odd.team) or scraped_odd.team.lower()
+            all_aliases = [alias for alias, target in TEAM_NAME_ALIASES.items() if target == canonical] or [canonical]
             statement = select(Odd).where(
-                func.lower(Odd.team) == scraped_odd.team.lower(),
+                func.lower(Odd.team).in_(all_aliases),
                 Odd.platform == scraped_odd.platform,
                 Odd.market == scraped_odd.market,
             )
