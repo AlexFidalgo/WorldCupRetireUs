@@ -135,10 +135,10 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
             {availableUsernames.length > 0 && (
               <div className="bg-amber-500/10 border border-amber-500/25 rounded-lg px-3 py-3 space-y-2">
                 <p className="text-amber-400 text-sm font-medium">
-                  Este nome não está disponível.
+                  Nome não permitido.
                 </p>
                 <p className="text-slate-400 text-xs">
-                  Escolhe um dos nomes disponíveis:
+                  O teu nome deve começar por um dos seguintes:
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {availableUsernames.map((name) => (

@@ -19,19 +19,13 @@ def create_user_endpoint(
     request: UserCreateRequest,
     session: Session = Depends(get_session),
 ):
-    if request.username not in ALLOWED_USERNAMES:
-        taken = {
-            u.username
-            for u in session.exec(
-                select(User).where(User.username.in_(ALLOWED_USERNAMES))
-            ).all()
-        }
-        available = [u for u in ALLOWED_USERNAMES if u not in taken]
+    username_lower = request.username.lower()
+    if not any(username_lower.startswith(prefix.lower()) for prefix in ALLOWED_USERNAMES):
         raise HTTPException(
             status_code=400,
             detail={
                 "code": "username_not_allowed",
-                "available": available,
+                "available": ALLOWED_USERNAMES,
             },
         )
 

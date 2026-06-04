@@ -27,6 +27,8 @@ MANUAL_ODDS_FILE = APP_DIR / "data" / "manual_winner_odds.csv"
 PLATFORM_PRIORITY_FILE = APP_DIR / "data" / "platform_priority.csv"
 
 ALLOWED_USERNAMES = [
+    "franzoi",
+    "henrique",
     "alexfidalgo",
     "caio",
     "fusco",

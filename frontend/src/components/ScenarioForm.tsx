@@ -55,6 +55,7 @@ export function ScenarioForm({
   isSaving,
 }: ScenarioFormProps) {
   const oddMap = Object.fromEntries(bestOdds.map((o) => [o.team, o.best_odd]));
+  const platformMap = Object.fromEntries(bestOdds.map((o) => [o.team, o.best_platform]));
   const sortedTeams = [...ALL_TEAMS].sort(
     (a, b) => (oddMap[a] ?? Infinity) - (oddMap[b] ?? Infinity),
   );
@@ -202,6 +203,14 @@ export function ScenarioForm({
           )}
         </div>
 
+        {/* Column headers */}
+        <div className="flex items-center gap-3 px-3 pb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-600">
+          <span className="flex-1">Seleção</span>
+          <span className="w-12 text-right">Odd</span>
+          <span className="w-24 text-right">Casa</span>
+          <span className="w-20 text-right">Peso</span>
+        </div>
+
         <div className="space-y-1.5">
           {sortedTeams.map((team) => {
             const isSelected = selectedTeams.includes(team);
@@ -209,7 +218,7 @@ export function ScenarioForm({
             return (
               <div
                 key={team}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all ${
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg border transition-all ${
                   isSelected
                     ? "bg-emerald-500/8 border-emerald-500/30"
                     : "bg-slate-800/40 border-slate-700/60 hover:border-slate-600"
@@ -226,14 +235,18 @@ export function ScenarioForm({
                   <span className="text-base leading-none flex-shrink-0">
                     {TEAM_FLAGS[team] ?? "🏳"}
                   </span>
-                  <span
-                    className={`text-sm font-medium truncate ${
-                      isSelected ? "text-slate-100" : "text-slate-400"
-                    }`}
-                  >
+                  <span className={`text-sm font-medium truncate ${isSelected ? "text-slate-100" : "text-slate-400"}`}>
                     {TEAM_DISPLAY[team] ?? team}
                   </span>
                 </label>
+
+                <span className="w-12 text-right font-mono text-sm text-slate-300 flex-shrink-0">
+                  {oddMap[team] != null ? oddMap[team].toFixed(2) : "—"}
+                </span>
+
+                <span className="w-24 text-right text-xs text-slate-500 flex-shrink-0 truncate">
+                  {platformMap[team] ?? "—"}
+                </span>
 
                 <input
                   type="number"

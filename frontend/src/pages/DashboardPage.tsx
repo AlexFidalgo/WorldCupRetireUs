@@ -6,7 +6,6 @@ import {
   saveScenarioFromOdds,
 } from "../api/scenarios";
 import { DirectBetForm } from "../components/DirectBetForm";
-import { OddsBestTable } from "../components/OddsBestTable";
 import { ScenarioForm } from "../components/ScenarioForm";
 import { ScenarioResult } from "../components/ScenarioResult";
 import { ScenariosList } from "../components/ScenariosList";
@@ -32,13 +31,13 @@ type ToastState = {
 export function DashboardPage({ onLogout }: DashboardPageProps) {
   const username = getCurrentUsername() ?? "utilizador";
   const [view, setView] = useState<View>("apostas");
-  const [isLoadingOdds, setIsLoadingOdds] = useState(true);
+  const [, setIsLoadingOdds] = useState(true);
   const [isCalculating, setIsCalculating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [bestOdds, setBestOdds] = useState<BestOddResponse[]>([]);
   const [scenarioResult, setScenarioResult] =
     useState<ScenarioCalculateResponse | null>(null);
-  const [scenarioMode, setScenarioMode] = useState<ScenarioMode>("pesos");
+  const [scenarioMode, setScenarioMode] = useState<ScenarioMode>("direto");
   const [toast, setToast] = useState<ToastState>(null);
 
   useEffect(() => {
@@ -137,14 +136,19 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
             </button>
           </nav>
 
-          {/* Sign out */}
-          <button
-            type="button"
-            onClick={onLogout}
-            className="text-xs text-slate-400 hover:text-red-400 transition-colors px-3 py-1.5 rounded-lg hover:bg-slate-800 font-medium flex-shrink-0"
-          >
-            Sair
-          </button>
+          {/* Username + sign out */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <span className="text-xs text-slate-400 font-medium hidden sm:block">
+              {username}
+            </span>
+            <button
+              type="button"
+              onClick={onLogout}
+              className="text-xs text-slate-400 hover:text-red-400 transition-colors px-3 py-1.5 rounded-lg hover:bg-slate-800 font-medium"
+            >
+              Sair
+            </button>
+          </div>
         </div>
       </header>
 
@@ -152,53 +156,6 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
         {/* ── Apostas view ── */}
         {view === "apostas" && (
           <>
-            {/* Best Odds */}
-            <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
-                <div>
-                  <h2 className="font-semibold text-slate-100 text-sm">
-                    Melhores Odds — Vencedor
-                  </h2>
-                  <p className="text-slate-500 text-xs mt-0.5">
-                    Melhores odds disponíveis por seleção nas casas de aposta
-                  </p>
-                </div>
-                {!isLoadingOdds && bestOdds.length > 0 && (
-                  <span className="text-xs text-slate-500 bg-slate-800 px-2.5 py-1 rounded-full">
-                    {bestOdds.length} seleções
-                  </span>
-                )}
-              </div>
-              <div className="p-6">
-                {isLoadingOdds ? (
-                  <div className="flex items-center gap-2 text-slate-500 text-sm">
-                    <svg
-                      className="w-4 h-4 animate-spin"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                      />
-                    </svg>
-                    Carregando odds...
-                  </div>
-                ) : (
-                  <OddsBestTable odds={bestOdds} />
-                )}
-              </div>
-            </div>
-
             {/* Scenario calculator */}
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
               <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
@@ -209,17 +166,6 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
                   <div className="inline-flex rounded-lg bg-slate-800 p-0.5 gap-0.5">
                     <button
                       type="button"
-                      onClick={() => setScenarioMode("pesos")}
-                      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                        scenarioMode === "pesos"
-                          ? "bg-slate-700 text-slate-100 shadow-sm"
-                          : "text-slate-400 hover:text-slate-300"
-                      }`}
-                    >
-                      Por pesos
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => setScenarioMode("direto")}
                       className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                         scenarioMode === "direto"
@@ -228,6 +174,17 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
                       }`}
                     >
                       Valor direto
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setScenarioMode("pesos")}
+                      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                        scenarioMode === "pesos"
+                          ? "bg-slate-700 text-slate-100 shadow-sm"
+                          : "text-slate-400 hover:text-slate-300"
+                      }`}
+                    >
+                      Por pesos
                     </button>
                   </div>
                 </div>

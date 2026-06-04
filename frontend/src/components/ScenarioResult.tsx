@@ -1,7 +1,7 @@
 import type { ScenarioCalculateResponse } from "../types/api";
 import { ImageSlideshow } from "./ImageSlideshow";
 
-const imageModules = import.meta.glob<string>("../assets/*.png", {
+const imageModules = import.meta.glob<string>("../assets/*.{png,jpg,jpeg,webp}", {
   eager: true,
   import: "default",
 });

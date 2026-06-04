@@ -59,6 +59,7 @@ export function DirectBetForm({
   isSaving,
 }: DirectBetFormProps) {
   const oddMap = Object.fromEntries(bestOdds.map((o) => [o.team, o.best_odd]));
+  const platformMap = Object.fromEntries(bestOdds.map((o) => [o.team, o.best_platform]));
   const sortedTeams = [...ALL_TEAMS].sort(
     (a, b) => (oddMap[a] ?? Infinity) - (oddMap[b] ?? Infinity),
   );
@@ -172,13 +173,21 @@ export function DirectBetForm({
           )}
         </div>
 
+        {/* Column headers */}
+        <div className="flex items-center gap-3 px-3 pb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-600">
+          <span className="flex-1">Seleção</span>
+          <span className="w-12 text-right">Odd</span>
+          <span className="w-24 text-right">Casa</span>
+          <span className="w-24 text-right">Valor (R$)</span>
+        </div>
+
         <div className="space-y-1.5">
           {sortedTeams.map((team) => {
             const isSelected = selectedTeams.includes(team);
             return (
               <div
                 key={team}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all ${
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg border transition-all ${
                   isSelected
                     ? "bg-emerald-500/8 border-emerald-500/30"
                     : "bg-slate-800/40 border-slate-700/60 hover:border-slate-600"
@@ -195,28 +204,29 @@ export function DirectBetForm({
                   <span className="text-base leading-none flex-shrink-0">
                     {TEAM_FLAGS[team] ?? "🏳"}
                   </span>
-                  <span
-                    className={`text-sm font-medium truncate ${
-                      isSelected ? "text-slate-100" : "text-slate-400"
-                    }`}
-                  >
+                  <span className={`text-sm font-medium truncate ${isSelected ? "text-slate-100" : "text-slate-400"}`}>
                     {TEAM_DISPLAY[team] ?? team}
                   </span>
                 </label>
 
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <span className="text-xs text-slate-500 font-medium">R$</span>
-                  <input
-                    type="number"
-                    min="0.01"
-                    step="0.01"
-                    value={amounts[team] ?? ""}
-                    onChange={(e) => handleAmountChange(team, e.target.value)}
-                    disabled={!isSelected || isSubmitting}
-                    placeholder="0,00"
-                    className="w-24 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-right text-slate-100 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
-                  />
-                </div>
+                <span className="w-12 text-right font-mono text-sm text-slate-300 flex-shrink-0">
+                  {oddMap[team] != null ? oddMap[team].toFixed(2) : "—"}
+                </span>
+
+                <span className="w-24 text-right text-xs text-slate-500 flex-shrink-0 truncate">
+                  {platformMap[team] ?? "—"}
+                </span>
+
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={amounts[team] ?? ""}
+                  onChange={(e) => handleAmountChange(team, e.target.value)}
+                  disabled={!isSelected || isSubmitting}
+                  placeholder="0,00"
+                  className="w-24 flex-shrink-0 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-right text-slate-100 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
+                />
               </div>
             );
           })}
