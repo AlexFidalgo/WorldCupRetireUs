@@ -1,12 +1,12 @@
-import { useState, type FormEvent } from "react";
-import type { BestOddResponse, ScenarioCalculateFromOddsRequest } from "../types/api";
+import { useEffect, useMemo, useState } from "react";
+import type { BestOddResponse, ScenarioCalculateFromOddsRequest, ScenarioCalculateResponse } from "../types/api";
+import { calculateLocally } from "../utils/calculateScenario";
 
 type DirectBetFormProps = {
   username: string;
   bestOdds: BestOddResponse[];
-  onCalculate: (payload: ScenarioCalculateFromOddsRequest) => Promise<void>;
+  onLiveResult: (result: ScenarioCalculateResponse | null) => void;
   onSave: (payload: ScenarioCalculateFromOddsRequest) => Promise<void>;
-  isCalculating: boolean;
   isSaving: boolean;
 };
 
@@ -53,9 +53,8 @@ function fmtBRL(n: number) {
 export function DirectBetForm({
   username,
   bestOdds,
-  onCalculate,
+  onLiveResult,
   onSave,
-  isCalculating,
   isSaving,
 }: DirectBetFormProps) {
   const oddMap = Object.fromEntries(bestOdds.map((o) => [o.team, o.best_odd]));
@@ -68,7 +67,20 @@ export function DirectBetForm({
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [amounts, setAmounts] = useState<Record<string, string>>({});
 
-  const isSubmitting = isCalculating || isSaving;
+  const liveResult = useMemo(
+    () =>
+      calculateLocally(
+        selectedTeams,
+        Object.fromEntries(selectedTeams.map((t) => [t, Number(amounts[t] ?? 0)])),
+        1,
+        bestOdds,
+      ),
+    [selectedTeams, amounts, bestOdds],
+  );
+
+  useEffect(() => {
+    onLiveResult(liveResult);
+  }, [liveResult, onLiveResult]);
 
   function handleTeamToggle(team: string) {
     setSelectedTeams((current) => {
@@ -102,22 +114,13 @@ export function DirectBetForm({
     };
   }
 
-  async function handleCalculate(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    await onCalculate(buildPayload());
-  }
-
-  async function handleSave() {
-    await onSave(buildPayload());
-  }
-
   const totalAmount = selectedTeams.reduce(
     (sum, team) => sum + Number(amounts[team] ?? 0),
     0,
   );
 
   return (
-    <form onSubmit={handleCalculate} className="space-y-5">
+    <div className="space-y-5">
       {/* Name */}
       <div>
         <label
@@ -131,30 +134,20 @@ export function DirectBetForm({
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          disabled={isSubmitting}
-          required
+          disabled={isSaving}
           className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-colors disabled:opacity-50"
         />
       </div>
 
-      {/* Buttons */}
-      <div className="flex gap-3">
-        <button
-          type="submit"
-          disabled={isSubmitting || selectedTeams.length === 0}
-          className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-        >
-          {isCalculating ? "Calculando..." : "Calcular"}
-        </button>
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={isSubmitting || selectedTeams.length === 0}
-          className="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-100 font-semibold py-2.5 rounded-lg border border-slate-600 hover:border-slate-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-        >
-          {isSaving ? "Salvando..." : "Salvar"}
-        </button>
-      </div>
+      {/* Save button */}
+      <button
+        type="button"
+        onClick={() => void onSave(buildPayload())}
+        disabled={isSaving || selectedTeams.length === 0}
+        className="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+      >
+        {isSaving ? "Salvando..." : "Salvar cenário"}
+      </button>
 
       {/* Teams */}
       <div>
@@ -165,9 +158,7 @@ export function DirectBetForm({
           {selectedTeams.length > 0 && (
             <span className="text-xs text-slate-500">
               {selectedTeams.length} selecionadas ·{" "}
-              <span className="text-emerald-400 font-medium">
-                {fmtBRL(totalAmount)}
-              </span>{" "}
+              <span className="text-emerald-400 font-medium">{fmtBRL(totalAmount)}</span>{" "}
               total
             </span>
           )}
@@ -198,7 +189,7 @@ export function DirectBetForm({
                     type="checkbox"
                     checked={isSelected}
                     onChange={() => handleTeamToggle(team)}
-                    disabled={isSubmitting}
+                    disabled={isSaving}
                     className="w-4 h-4 rounded accent-emerald-500 flex-shrink-0"
                   />
                   <span className="text-base leading-none flex-shrink-0">
@@ -223,7 +214,7 @@ export function DirectBetForm({
                   step="0.01"
                   value={amounts[team] ?? ""}
                   onChange={(e) => handleAmountChange(team, e.target.value)}
-                  disabled={!isSelected || isSubmitting}
+                  disabled={!isSelected || isSaving}
                   placeholder="0,00"
                   className="w-24 flex-shrink-0 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-right text-slate-100 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
                 />
@@ -244,7 +235,6 @@ export function DirectBetForm({
           </span>
         </div>
       )}
-
-    </form>
+    </div>
   );
 }

@@ -1,12 +1,12 @@
-import { useState, type FormEvent } from "react";
-import type { BestOddResponse, ScenarioCalculateFromOddsRequest } from "../types/api";
+import { useEffect, useMemo, useState } from "react";
+import type { BestOddResponse, ScenarioCalculateFromOddsRequest, ScenarioCalculateResponse } from "../types/api";
+import { calculateLocally } from "../utils/calculateScenario";
 
 type ScenarioFormProps = {
   username: string;
   bestOdds: BestOddResponse[];
-  onCalculate: (payload: ScenarioCalculateFromOddsRequest) => Promise<void>;
+  onLiveResult: (result: ScenarioCalculateResponse | null) => void;
   onSave: (payload: ScenarioCalculateFromOddsRequest) => Promise<void>;
-  isCalculating: boolean;
   isSaving: boolean;
 };
 
@@ -49,9 +49,8 @@ const TEAM_DISPLAY: Record<string, string> = {
 export function ScenarioForm({
   username,
   bestOdds,
-  onCalculate,
+  onLiveResult,
   onSave,
-  isCalculating,
   isSaving,
 }: ScenarioFormProps) {
   const oddMap = Object.fromEntries(bestOdds.map((o) => [o.team, o.best_odd]));
@@ -66,25 +65,33 @@ export function ScenarioForm({
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [weights, setWeights] = useState<Record<string, string>>({});
 
-  const isSubmitting = isCalculating || isSaving;
+  const liveResult = useMemo(
+    () =>
+      calculateLocally(
+        selectedTeams,
+        Object.fromEntries(selectedTeams.map((t) => [t, Number(weights[t] ?? 0)])),
+        Number(baseAmount),
+        bestOdds,
+      ),
+    [selectedTeams, weights, baseAmount, bestOdds],
+  );
+
+  useEffect(() => {
+    onLiveResult(liveResult);
+  }, [liveResult, onLiveResult]);
 
   function handleTeamToggle(team: string) {
     setSelectedTeams((current) => {
       if (current.includes(team)) {
         const nextTeams = current.filter((item) => item !== team);
-        setWeights((currentWeights) => {
-          const nextWeights = { ...currentWeights };
-          delete nextWeights[team];
-          return nextWeights;
+        setWeights((w) => {
+          const next = { ...w };
+          delete next[team];
+          return next;
         });
         return nextTeams;
       }
-
-      setWeights((currentWeights) => ({
-        ...currentWeights,
-        [team]: "1",
-      }));
-
+      setWeights((w) => ({ ...w, [team]: "1" }));
       return [...current, team];
     });
   }
@@ -105,22 +112,13 @@ export function ScenarioForm({
     };
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    await onCalculate(buildPayload());
-  }
-
-  async function handleSave() {
-    await onSave(buildPayload());
-  }
-
   const totalWeight = selectedTeams.reduce(
     (sum, team) => sum + Number(weights[team] ?? 0),
     0,
   );
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <div className="space-y-5">
       {/* Scenario name */}
       <div>
         <label
@@ -134,8 +132,7 @@ export function ScenarioForm({
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          disabled={isSubmitting}
-          required
+          disabled={isSaving}
           className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-colors disabled:opacity-50"
         />
       </div>
@@ -156,8 +153,7 @@ export function ScenarioForm({
             step="0.01"
             value={baseAmount}
             onChange={(e) => setBaseAmount(e.target.value)}
-            disabled={isSubmitting}
-            required
+            disabled={isSaving}
             className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-colors disabled:opacity-50"
           />
         </div>
@@ -171,24 +167,15 @@ export function ScenarioForm({
         </div>
       </div>
 
-      {/* Buttons */}
-      <div className="flex gap-3">
-        <button
-          type="submit"
-          disabled={isSubmitting || selectedTeams.length === 0}
-          className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-        >
-          {isCalculating ? "Calculando..." : "Calcular"}
-        </button>
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={isSubmitting || selectedTeams.length === 0}
-          className="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-100 font-semibold py-2.5 rounded-lg border border-slate-600 hover:border-slate-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-        >
-          {isSaving ? "Salvando..." : "Salvar"}
-        </button>
-      </div>
+      {/* Save button */}
+      <button
+        type="button"
+        onClick={() => void onSave(buildPayload())}
+        disabled={isSaving || selectedTeams.length === 0}
+        className="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+      >
+        {isSaving ? "Salvando..." : "Salvar cenário"}
+      </button>
 
       {/* Teams */}
       <div>
@@ -214,7 +201,6 @@ export function ScenarioForm({
         <div className="space-y-1.5">
           {sortedTeams.map((team) => {
             const isSelected = selectedTeams.includes(team);
-
             return (
               <div
                 key={team}
@@ -229,7 +215,7 @@ export function ScenarioForm({
                     type="checkbox"
                     checked={isSelected}
                     onChange={() => handleTeamToggle(team)}
-                    disabled={isSubmitting}
+                    disabled={isSaving}
                     className="w-4 h-4 rounded accent-emerald-500 flex-shrink-0"
                   />
                   <span className="text-base leading-none flex-shrink-0">
@@ -254,7 +240,7 @@ export function ScenarioForm({
                   step="0.01"
                   value={weights[team] ?? ""}
                   onChange={(e) => handleWeightChange(team, e.target.value)}
-                  disabled={!isSelected || isSubmitting}
+                  disabled={!isSelected || isSaving}
                   placeholder="Peso"
                   className="w-20 flex-shrink-0 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-right text-slate-100 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
                 />
@@ -263,7 +249,6 @@ export function ScenarioForm({
           })}
         </div>
       </div>
-
-    </form>
+    </div>
   );
 }

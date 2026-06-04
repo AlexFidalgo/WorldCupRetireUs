@@ -98,6 +98,9 @@ export function ScenarioResult({ result }: ScenarioResultProps) {
               <th className="pb-3 pr-3 text-xs font-semibold uppercase tracking-wider text-slate-500 text-right">
                 Retorno
               </th>
+              <th className="pb-3 pr-3 text-xs font-semibold uppercase tracking-wider text-slate-500 text-right">
+                Ret. %
+              </th>
               <th className="pb-3 text-xs font-semibold uppercase tracking-wider text-slate-500 text-right">
                 Líquido
               </th>
@@ -106,6 +109,10 @@ export function ScenarioResult({ result }: ScenarioResultProps) {
           <tbody>
             {result.rows.map((row) => {
               const isBestNet = row.net_result === bestNet;
+              const retPct =
+                result.total_bet > 0
+                  ? (row.net_result / result.total_bet) * 100
+                  : null;
               return (
                 <tr
                   key={row.team}
@@ -134,6 +141,19 @@ export function ScenarioResult({ result }: ScenarioResultProps) {
                   </td>
                   <td className="py-2.5 pr-3 text-right font-mono text-slate-300">
                     {fmtBRL(row.gross_return)}
+                  </td>
+                  <td
+                    className={`py-2.5 pr-3 text-right font-mono ${
+                      retPct == null
+                        ? "text-slate-500"
+                        : retPct >= 0
+                          ? "text-emerald-400"
+                          : "text-red-400"
+                    }`}
+                  >
+                    {retPct == null
+                      ? "—"
+                      : `${retPct >= 0 ? "+" : ""}${retPct.toFixed(1)}%`}
                   </td>
                   <td
                     className={`py-2.5 text-right font-mono font-semibold ${

@@ -1,10 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getCurrentUsername } from "../api/client";
 import { getBestOdds } from "../api/odds";
-import {
-  calculateScenarioFromOdds,
-  saveScenarioFromOdds,
-} from "../api/scenarios";
+import { saveScenarioFromOdds } from "../api/scenarios";
 import { DirectBetForm } from "../components/DirectBetForm";
 import { ScenarioForm } from "../components/ScenarioForm";
 import { ScenarioResult } from "../components/ScenarioResult";
@@ -32,7 +29,6 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
   const username = getCurrentUsername() ?? "utilizador";
   const [view, setView] = useState<View>("apostas");
   const [, setIsLoadingOdds] = useState(true);
-  const [isCalculating, setIsCalculating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [bestOdds, setBestOdds] = useState<BestOddResponse[]>([]);
   const [scenarioResult, setScenarioResult] =
@@ -63,29 +59,17 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
     setToast({ message, type });
   }
 
-  async function handleCalculateScenario(
-    payload: ScenarioCalculateFromOddsRequest,
-  ) {
-    setIsCalculating(true);
-    try {
-      const result = await calculateScenarioFromOdds(payload);
+  const handleLiveResult = useCallback(
+    (result: ScenarioCalculateResponse | null) => {
       setScenarioResult(result);
-    } catch (error) {
-      showToast(
-        error instanceof Error ? error.message : "Falha ao calcular cenário.",
-        "error",
-      );
-    } finally {
-      setIsCalculating(false);
-    }
-  }
+    },
+    [],
+  );
 
   async function handleSaveScenario(payload: ScenarioCalculateFromOddsRequest) {
     setIsSaving(true);
     try {
       await saveScenarioFromOdds(payload);
-      const result = await calculateScenarioFromOdds(payload);
-      setScenarioResult(result);
       showToast("Cenário salvo com sucesso.", "success");
     } catch (error) {
       showToast(
@@ -193,18 +177,16 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
                     <ScenarioForm
                       username={username}
                       bestOdds={bestOdds}
-                      onCalculate={handleCalculateScenario}
+                      onLiveResult={handleLiveResult}
                       onSave={handleSaveScenario}
-                      isCalculating={isCalculating}
                       isSaving={isSaving}
                     />
                   ) : (
                     <DirectBetForm
                       username={username}
                       bestOdds={bestOdds}
-                      onCalculate={handleCalculateScenario}
+                      onLiveResult={handleLiveResult}
                       onSave={handleSaveScenario}
-                      isCalculating={isCalculating}
                       isSaving={isSaving}
                     />
                   )}
