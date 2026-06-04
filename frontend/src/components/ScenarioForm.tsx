@@ -1,6 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from "react";
 import type { BestOddResponse, ScenarioCalculateFromOddsRequest, ScenarioCalculateResponse } from "../types/api";
 import { calculateLocally } from "../utils/calculateScenario";
+
+export type ScenarioFormHandle = {
+  applyGoalSeek: (team: string, value: number) => void;
+};
 
 type ScenarioFormProps = {
   username: string;
@@ -46,13 +50,14 @@ const TEAM_DISPLAY: Record<string, string> = {
   noruega: "Noruega",
 };
 
-export function ScenarioForm({
+export const ScenarioForm = forwardRef<ScenarioFormHandle, ScenarioFormProps>(
+function ScenarioForm({
   username,
   bestOdds,
   onLiveResult,
   onSave,
   isSaving,
-}: ScenarioFormProps) {
+}: ScenarioFormProps, ref) {
   const oddMap = Object.fromEntries(bestOdds.map((o) => [o.team, o.best_odd]));
   const platformMap = Object.fromEntries(bestOdds.map((o) => [o.team, o.best_platform]));
   const sortedTeams = [...ALL_TEAMS].sort(
@@ -64,6 +69,12 @@ export function ScenarioForm({
   const [market] = useState("winner");
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [weights, setWeights] = useState<Record<string, string>>({});
+
+  useImperativeHandle(ref, () => ({
+    applyGoalSeek(team: string, value: number) {
+      setWeights((w) => ({ ...w, [team]: value.toFixed(4) }));
+    },
+  }));
 
   const liveResult = useMemo(
     () =>
@@ -251,4 +262,4 @@ export function ScenarioForm({
       </div>
     </div>
   );
-}
+});

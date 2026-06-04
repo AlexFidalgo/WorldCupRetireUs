@@ -1,5 +1,24 @@
 import type { BestOddResponse, ScenarioCalculateResponse } from "../types/api";
 
+/**
+ * Given a desired net_result for a team, return the weight (or amount for
+ * valor-direto where base=1) that achieves it, or null if unsolvable.
+ *
+ * net = base × w × odd − base × (w + sumOther)
+ *     = base × w × (odd − 1) − base × sumOther
+ * → w = (target/base + sumOther) / (odd − 1)
+ */
+export function solveForWeight(
+  targetNet: number,
+  baseAmount: number,
+  odd: number,
+  sumOtherWeights: number,
+): number | null {
+  if (odd <= 1) return null; // indeterminate
+  const w = (targetNet / baseAmount + sumOtherWeights) / (odd - 1);
+  return w >= 0 ? w : null; // negative weight is meaningless
+}
+
 export function calculateLocally(
   teams: string[],
   weights: Record<string, number>,

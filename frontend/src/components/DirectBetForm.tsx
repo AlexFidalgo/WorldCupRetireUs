@@ -1,6 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from "react";
 import type { BestOddResponse, ScenarioCalculateFromOddsRequest, ScenarioCalculateResponse } from "../types/api";
 import { calculateLocally } from "../utils/calculateScenario";
+
+export type DirectBetFormHandle = {
+  applyGoalSeek: (team: string, value: number) => void;
+};
 
 type DirectBetFormProps = {
   username: string;
@@ -50,13 +54,14 @@ function fmtBRL(n: number) {
   return `R$${n.toFixed(2).replace(".", ",")}`;
 }
 
-export function DirectBetForm({
+export const DirectBetForm = forwardRef<DirectBetFormHandle, DirectBetFormProps>(
+function DirectBetForm({
   username,
   bestOdds,
   onLiveResult,
   onSave,
   isSaving,
-}: DirectBetFormProps) {
+}: DirectBetFormProps, ref) {
   const oddMap = Object.fromEntries(bestOdds.map((o) => [o.team, o.best_odd]));
   const platformMap = Object.fromEntries(bestOdds.map((o) => [o.team, o.best_platform]));
   const sortedTeams = [...ALL_TEAMS].sort(
@@ -66,6 +71,12 @@ export function DirectBetForm({
   const [name, setName] = useState(`${username} é foda`);
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [amounts, setAmounts] = useState<Record<string, string>>({});
+
+  useImperativeHandle(ref, () => ({
+    applyGoalSeek(team: string, value: number) {
+      setAmounts((a) => ({ ...a, [team]: value.toFixed(2) }));
+    },
+  }));
 
   const liveResult = useMemo(
     () =>
@@ -237,4 +248,4 @@ export function DirectBetForm({
       )}
     </div>
   );
-}
+});

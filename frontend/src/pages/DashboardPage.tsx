@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getCurrentUsername } from "../api/client";
 import { getBestOdds } from "../api/odds";
 import { saveScenarioFromOdds } from "../api/scenarios";
-import { DirectBetForm } from "../components/DirectBetForm";
-import { ScenarioForm } from "../components/ScenarioForm";
+import { DirectBetForm, type DirectBetFormHandle } from "../components/DirectBetForm";
+import { ScenarioForm, type ScenarioFormHandle } from "../components/ScenarioForm";
+import { solveForWeight } from "../utils/calculateScenario";
 import { ScenarioResult } from "../components/ScenarioResult";
 import { ScenariosList } from "../components/ScenariosList";
 import { Toast } from "../components/Toast";
@@ -57,6 +58,30 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
 
   function showToast(message: string, type: "success" | "error") {
     setToast({ message, type });
+  }
+
+  const scenarioFormRef = useRef<ScenarioFormHandle>(null);
+  const directBetFormRef = useRef<DirectBetFormHandle>(null);
+
+  function handleGoalSeek(team: string, targetNet: number) {
+    if (!scenarioResult) return;
+    const row = scenarioResult.rows.find((r) => r.team === team);
+    if (!row) return;
+
+    const base = scenarioResult.base_amount;
+    const sumOther = scenarioResult.total_bet / base - row.weight;
+    const newValue = solveForWeight(targetNet, base, row.best_odd, sumOther);
+
+    if (newValue === null) {
+      showToast("Alvo impossível para esta seleção (odd ≤ 1 ou valor negativo).", "error");
+      return;
+    }
+
+    if (scenarioMode === "pesos") {
+      scenarioFormRef.current?.applyGoalSeek(team, newValue);
+    } else {
+      directBetFormRef.current?.applyGoalSeek(team, newValue);
+    }
   }
 
   const handleLiveResult = useCallback(
@@ -175,6 +200,7 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
                 <div className="p-6">
                   {scenarioMode === "pesos" ? (
                     <ScenarioForm
+                      ref={scenarioFormRef}
                       username={username}
                       bestOdds={bestOdds}
                       onLiveResult={handleLiveResult}
@@ -183,6 +209,7 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
                     />
                   ) : (
                     <DirectBetForm
+                      ref={directBetFormRef}
                       username={username}
                       bestOdds={bestOdds}
                       onLiveResult={handleLiveResult}
@@ -201,9 +228,15 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
                   <p className="text-slate-500 text-xs mt-0.5">
                     Retornos projetados e detalhamento por seleção
                   </p>
+                  <p className="text-slate-600 text-xs mt-1">
+                    Clique em qualquer valor de <span className="text-slate-500">Líquido</span> para definir um alvo — o peso ou valor apostado é ajustado automaticamente.
+                  </p>
                 </div>
                 <div className="p-6">
-                  <ScenarioResult result={scenarioResult} />
+                  <ScenarioResult
+                    result={scenarioResult}
+                    onGoalSeek={scenarioResult ? handleGoalSeek : undefined}
+                  />
                 </div>
               </div>
             </div>
