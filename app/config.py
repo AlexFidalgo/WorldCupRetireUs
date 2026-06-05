@@ -35,7 +35,8 @@ ALLOWED_USERNAMES = [
     "griep",
     "renan",
     "breno",
-    "brenda"
+    "brenda",
+    "vincent"
 ]
 
 TARGET_TEAMS = [
