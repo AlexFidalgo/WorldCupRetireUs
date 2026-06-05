@@ -1,3 +1,7 @@
+# Website URL
+
+http://34.133.32.219
+
 # Running app (local dev)
 ```sh
 uvicorn app.main:app --reload
@@ -907,3 +911,221 @@ npm run dev
 
 Vite will start on `http://localhost:5173`.
 
+# GCP
+
+### VM instance
+
+Created a VM instance called `worldcup-server`.
+
+*Internal IP (10.128.0.2)* — the VM's address inside Google's private network. Only other GCP resources can reach it. You never use this directly.
+
+*External IP (34.133.32.219)* — the public address reachable from the internet. This is what you'll use for everything: SSH, visiting the website, calling the API. 
+
+### Command inside VM
+
+```sh
+sudo apt update && sudo apt upgrade -y
+```
+
+```sh
+sudo apt install -y nginx git python3-pip python3-venv
+```
+
+```sh
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+```
+
+```sh
+cd ~/WorldCupRetireUs
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Build the frontend:
+```sh
+cd ~/WorldCupRetireUs/frontend
+npm install
+npm run build
+cd ..
+```
+
+Create the `.env` file:
+```sh
+nano ~/WorldCupRetireUs/.env
+```
+
+.env
+```txt
+...
+ALLOWED_ORIGINS=http://34.133.32.219
+```
+
+#### nginx
+
+*nginx* sits in front of everything and acts as a traffic director.
+
+When someone visits http://34.133.32.219:
+
+- If the request is for the website (`/`, `/index.html`, CSS, JS files) → nginx serves those files directly from `frontend/dist/`.
+
+- If the request is for the API (`/scenarios/...`, `/odds/...`, `/auth/...`) → nginx forwards it to your FastAPI app running on port 8000.
+
+Without *nginx*, you'd have two separate things the browser needs to talk to (port 80 for the frontend, port 8000 for the API), which causes CORS problems and is messy. nginx unifies everything under one address.
+
+It also handles things like keeping connections efficient and will make adding HTTPS easy later.
+
+Set up nginx. Create the config file:
+```sh
+sudo nano /etc/nginx/sites-available/worldcup
+```
+
+Paste this inside:
+
+```
+server {
+    listen 80;
+    server_name 34.133.32.219;
+
+    location / {
+        root /home/alexfidalgo10/WorldCupRetireUs/frontend/dist;
+        try_files $uri $uri/ /index.html;
+    }
+
+    location ~ ^/(odds|scenarios|auth|users)/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+Then enable it:
+```sh
+sudo ln -s /etc/nginx/sites-available/worldcup /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+#### systemd
+
+- The VM reboots (GCP does this occasionally for maintenance) — your app goes down and stays down until you SSH in and restart it manually.
+- The app crashes — same problem, stays dead until you notice and fix it.
+
+With systemd it starts automatically on boot and restarts itself on crashes without you doing anything.
+
+Create the systemd service so FastAPI runs automatically and restarts if it crashes:
+
+```sh
+sudo nano /etc/systemd/system/worldcup.service
+```
+
+Paste this inside:
+```
+[Unit]
+Description=WorldCupRetireUs API
+After=network.target
+
+[Service]
+User=alexfidalgo10
+WorkingDirectory=/home/alexfidalgo10/WorldCupRetireUs
+EnvironmentFile=/home/alexfidalgo10/WorldCupRetireUs/.env
+ExecStart=/home/alexfidalgo10/WorldCupRetireUs/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Start it:
+```sh
+sudo systemctl enable worldcup
+sudo systemctl start worldcup
+sudo systemctl status worldcup
+```
+
+Output:
+```sh
+(.venv) alexfidalgo10@worldcup-server:~/WorldCupRetireUs$ sudo systemctl status worldcup
+● worldcup.service - WorldCupRetireUs API
+     Loaded: loaded (/etc/systemd/system/worldcup.service; enabled; preset: enabled)
+     Active: active (running) since Fri 2026-06-05 03:20:08 UTC; 8s ago
+   Main PID: 9179 (uvicorn)
+      Tasks: 6 (limit: 1071)
+     Memory: 87.8M
+        CPU: 1.562s
+     CGroup: /system.slice/worldcup.service
+             └─9179 /home/alexfidalgo10/WorldCupRetireUs/.venv/bin/python3 /home/alexfidalgo10/WorldCupRetireUs/.venv/bin/uvicorn app.main:app --host 127.0.0.1>
+
+Jun 05 03:20:08 worldcup-server systemd[1]: Started worldcup.service - WorldCupRetireUs API.
+Jun 05 03:20:10 worldcup-server uvicorn[9179]: INFO:     Started server process [9179]
+Jun 05 03:20:10 worldcup-server uvicorn[9179]: INFO:     Waiting for application startup.
+Jun 05 03:20:10 worldcup-server uvicorn[9179]: INFO:     Application startup complete.
+Jun 05 03:20:10 worldcup-server uvicorn[9179]: INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+```
+
+## Querying from the VM
+
+```sh
+sudo apt install -y sqlite3
+```
+
+```sh
+sqlite3 ~/WorldCupRetireUs/worldcup_retire_us.db
+```
+
+```sql
+SELECT * FROM user;
+SELECT * FROM odd;
+SELECT * FROM scenario;
+```
+
+Type `.quit` to quit
+
+
+
+# Importing odds inside VM
+
+```sh
+curl -X POST http://127.0.0.1:8000/odds/import/manual -H "X-Admin-Secret: XXX"
+```
+
+# Domain
+
+dash.cloudflare.com
+
+Go to `/domains/registrations`.
+
+Bought `worldcupretireus.uk`.
+
+Click on the domain, go to `DNS -> Records`, click `Add record`:
+Type	Name	IPv4 address	Proxy status
+A	@	34.133.32.219	Proxied (orange cloud)
+
+Go to your domain in Cloudflare dashboard
+Left sidebar → SSL/TLS
+Set the mode to Flexible
+
+On the server, update `.env`:
+```sh
+nano ~/WorldCupRetireUs/.env
+```
+
+```
+...
+ALLOWED_ORIGINS=https://worldcupretireus.uk
+```
+
+Update *ngingx* config:
+```sh
+sudo nano /etc/nginx/sites-available/worldcup
+# Change:  server_name 34.133.32.219;
+# To:      server_name worldcupretireus.uk;
+
+sudo nginx -t
+sudo systemctl reload nginx
+sudo systemctl restart worldcup
+```
+
+# Modifications to the code
