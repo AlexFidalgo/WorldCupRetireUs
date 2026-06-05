@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getCurrentUsername } from "../api/client";
 import { getBestOdds } from "../api/odds";
-import { saveScenarioFromOdds } from "../api/scenarios";
+import { saveScenario, saveScenarioFromOdds } from "../api/scenarios";
 import { DirectBetForm, type DirectBetFormHandle } from "../components/DirectBetForm";
 import { ScenarioForm, type ScenarioFormHandle } from "../components/ScenarioForm";
 import { solveForWeight } from "../utils/calculateScenario";
@@ -10,8 +10,8 @@ import { ScenariosList } from "../components/ScenariosList";
 import { Toast } from "../components/Toast";
 import type {
   BestOddResponse,
-  ScenarioCalculateFromOddsRequest,
   ScenarioCalculateResponse,
+  ScenarioSavePayload,
 } from "../types/api";
 
 type DashboardPageProps = {
@@ -91,10 +91,20 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
     [],
   );
 
-  async function handleSaveScenario(payload: ScenarioCalculateFromOddsRequest) {
+  async function handleSaveScenario(payload: ScenarioSavePayload) {
     setIsSaving(true);
     try {
-      await saveScenarioFromOdds(payload);
+      if (payload.explicit_odds) {
+        await saveScenario({
+          name: payload.name,
+          teams: payload.teams,
+          odds: payload.explicit_odds,
+          bet_weights: payload.bet_weights,
+          base_amount: payload.base_amount,
+        });
+      } else {
+        await saveScenarioFromOdds(payload);
+      }
       showToast("Cenário salvo com sucesso.", "success");
     } catch (error) {
       showToast(
