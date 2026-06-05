@@ -30,6 +30,20 @@ router = APIRouter(
 )
 
 
+def _assert_unique_name(name: str, user_id: int, session: Session) -> None:
+    existing = session.exec(
+        select(Scenario).where(
+            Scenario.user_id == user_id,
+            Scenario.name == name,
+        )
+    ).first()
+    if existing:
+        raise HTTPException(
+            status_code=400,
+            detail="Já tens um cenário com esse nome. Escolhe um nome diferente.",
+        )
+
+
 @router.post("/calculate", response_model=ScenarioCalculateResponse)
 def calculate_scenario_endpoint(
     request: ScenarioCalculateRequest,
@@ -50,6 +64,8 @@ def save_scenario_endpoint(
     service: ScenarioService = Depends(get_scenario_service),
     current_user: User = Depends(get_current_user),
 ):
+    _assert_unique_name(request.name, current_user.id, session)
+
     result = service.calculate(
         teams=request.teams,
         odds=request.odds,
@@ -228,6 +244,8 @@ def save_scenario_from_odds_endpoint(
     service: ScenarioService = Depends(get_scenario_service),
     current_user: User = Depends(get_current_user),
 ):
+    _assert_unique_name(request.name, current_user.id, session)
+
     odds = build_odds_dict_from_db(
         session=session,
         teams=request.teams,
