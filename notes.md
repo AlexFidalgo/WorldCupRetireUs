@@ -1129,3 +1129,9 @@ sudo systemctl restart worldcup
 ```
 
 # Modifications to the code
+
+```sh
+cd ~/WorldCupRetireUs
+git pull
+cd frontend && npm run build && cd ..
+```
